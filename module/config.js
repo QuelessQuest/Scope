@@ -103,7 +103,7 @@ SCOPE.namespace = {
 }
 
 SCOPE.focus = {
-  type: CONST.DRAWING_TYPES.TEXT,
+  t: CONST.DRAWING_TYPES.TEXT,
   y: 175,
   width: 464,
   height: 115,
@@ -122,7 +122,7 @@ SCOPE.focus = {
 }
 
 SCOPE.focusLabel = {
-  type: CONST.DRAWING_TYPES.TEXT,
+  t: CONST.DRAWING_TYPES.TEXT,
   pendingX: 2235,
   y: 100,
   width: 388,
@@ -142,7 +142,7 @@ SCOPE.focusLabel = {
 }
 
 SCOPE.bigPicture = {
-  type: CONST.DRAWING_TYPES.TEXT,
+  t: CONST.DRAWING_TYPES.TEXT,
   pendingX: 2235,
   y: 25,
   width: 388,

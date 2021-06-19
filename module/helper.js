@@ -1,3 +1,5 @@
+import {SCOPE} from "./config.js";
+
 /**
  * Return true if the object is empty, false otherwise
  * @param thing {{}}
@@ -5,6 +7,10 @@
  */
 export function isEmpty(thing) {
   return Object.keys(thing).length === 0
+}
+
+export function getFromTheme(item) {
+  return CONFIG.Scope.themeDefaults[`--scope-${item}`];
 }
 
 export function registerSettings() {
