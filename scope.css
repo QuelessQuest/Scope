@@ -1,0 +1,435 @@
+:root {
+  --scope-scene-background: "systems/Scope/assets/themes/whitespace/background.jpg";
+  --scope-bg-color: #7F7F7F;
+  --scope-bg-color-half: #7F7F7F80;
+  --scope-bg-window-blend-mode: 'luminosity';
+  --scope-bg-sheet-blend-mode: 'color-burn';
+  --scope-bg-color-contrast: #989797;
+  --scope-fg-color: #989797;
+  --scope-dark-color: #292929;
+  --scope-light-color: #EDEDED;
+  --scope-light-color-half: #EDEDED80;
+  --scope-accent-color: #713737;
+  --scope-text-light-color: #FFFFFF;
+  --scope-text-light-color-half: #FFFFFF80;
+  --scope-text-dark-color: #292929;
+  --scope-text-dark-color-lighter: #5F5858;
+  --scope-text-dark-color-half: #29292980;
+  --scope-text-highlight-color: #867F79;
+  --scope-text-selection-color: #694547;
+  --scope-border-color: #601F1F;
+  --scope-border-color-half: #601F1F80;
+  --scope-border-color-lighter: #872C2C;
+  --scope-focus-label-color: #601F1F;
+  --scope-focus-color: #601F1F;
+  --scope-period-label-size: 24;
+  --scope-period-icon-color: #7E676A;
+  --scope-period-label-color: #EDEDED;
+  --scope-period-label-stroke-color: #292929;
+  --scope-period-link-color: #6E5D5C;
+  --scope-event-label-size: 24;
+  --scope-event-icon-color: #989797;
+  --scope-event-label-color: #FFFFFF;
+  --scope-event-label-stroke-color: #292929;
+  --scope-event-link-color: #000000;
+  --scope-scene-label-color: #FFFFFF;
+  --scope-scene-link-color: #000000;
+  --scope-legacy-label-color: #FFFFFF;
+  --default-primary-color: var(--scope-text-light-color);
+  --default-secondary-color: var(--scope-text-dark-color);
+  --default-tertiary-color: var(--scope-text-dark-color-darker);
+  --default-light-color: var(--scope-border-color);
+  --default-faint-color: var(--scope-fg-color-half);
+  --default-primary-accent: var(--scope-accent-color);
+  --default-secondary-accent: var(--scope-bg-color-lighter);
+  --always-prepared-accent: var(--scope-fg-color-half);
+  --scrollbar-color: var(--scope-bg-color) var(--scope-fg-color);
+}
+.flexrow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.flexrow > * {
+  flex: 1;
+}
+.flexrow .flex1 {
+  flex: 1;
+}
+.flexrow .flex2 {
+  flex: 2;
+}
+.flexrow .flex3 {
+  flex: 3;
+}
+.flexrow .flex4 {
+  flex: 4;
+}
+.flexcol {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+.flexcol > * {
+  flex: 1;
+}
+.flexcol .flex1 {
+  flex: 1;
+}
+.flexcol .flex2 {
+  flex: 2;
+}
+.flexcol .flex3 {
+  flex: 3;
+}
+.flexcol .flex4 {
+  flex: 4;
+}
+.strikethrough-text {
+  text-decoration: line-through;
+}
+.scope .period img {
+  border: 0;
+}
+#hotbar .bar-controls,
+#hotbar #macro-list {
+  color: var(--scope-text-light-color);
+  background: unset;
+  border: 1px solid var(--scope-border-color);
+  box-shadow: 0 0 3px var(--scope-border-color) inset;
+}
+#hotbar .macro.inactive {
+  box-shadow: 0 0 5px var(--scope-border-color) inset;
+}
+#hotbar .macro.active {
+  background: var(--scope-bg-color);
+}
+#hotbar .macro.active:hover {
+  border: 1px solid var(--scope-accent-color);
+}
+#hotbar .macro {
+  border: 1px solid var(--scope-border-color);
+  background: var(--scope-border-color-half);
+  box-shadow: 0 0 5px var(--scope-border-color) inset;
+}
+#hotbar .macro:hover {
+  box-shadow: 0 0 5px var(--scope-accent-color) inset;
+}
+::selection {
+  background: var(--scope-text-selection-color);
+  color: var(--scope-text-light-color);
+}
+*::placeholder {
+  color: var(--scope-text-dark-color-half) !important;
+}
+::-webkit-scrollbar-track {
+  box-shadow: 0 0 1px var(--scope-border-color) inset;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scope-bg-color);
+  border: 1px solid var(--scope-border-color);
+}
+.banner {
+  background: goldenrod;
+  border: 1px solid var(--scope-border-color);
+  box-shadow: 0 0 10px var(--scope-accent-color);
+}
+.system-Scope .window-content {
+  background: var(--scope-bg-color);
+  background-color: var(--scope-bg-color);
+}
+.system-Scope #navigation #scene-list .scene.view,
+.system-Scope #navigation #scene-list .scene.context {
+  cursor: default;
+  color: #FFF;
+  border: 1px solid var(--scope-border-color);
+  background: var(--scope-bg-color);
+  border-bottom: 1px solid var(--scope-border-color-lighter);
+  box-shadow: 0 0 10px var(--scope-border-color-lighter);
+}
+.system-Scope #navigation #nav-toggle {
+  background: var(--scope-bg-color-half);
+}
+.system-Scope #navigation #nav-toggle:hover {
+  text-shadow: 0 0 10px var(--scope-accent-color);
+}
+.system-Scope #controls .scene-control.active,
+.system-Scope #controls .control-tool.active {
+  color: var(--scope-text-light-color);
+  background: var(--scope-bg-color);
+  border: 1px solid var(--scope-border-color);
+  border-bottom: 1px solid var(--scope-border-color-lighter);
+  box-shadow: 0 0 10px var(--scope-border-color-lighter);
+}
+.system-Scope #controls .scene-control {
+  background: var(--scope-bg-color-half);
+  color: var(--scope-text-light-color-half);
+}
+.system-Scope #controls .scene-control:hover {
+  color: var(--scope-text-light-color);
+  border: 1px solid var(--scope-border-color);
+  border-bottom: 1px solid var(--scope-border-color-lighter);
+  box-shadow: 0 0 10px var(--scope-border-color-lighter);
+}
+.system-Scope #controls .control-tool {
+  background: var(--scope-bg-color-half);
+  color: var(--scope-text-light-color-half);
+}
+.system-Scope #controls .control-tool:hover {
+  color: #FFF;
+  border: 1px solid var(--scope-border-color);
+  border-bottom: 1px solid var(--scope-border-color-lighter);
+  box-shadow: 0 0 10px var(--scope-border-color-lighter);
+}
+.system-Scope h1 {
+  font-size: 2em;
+  border-bottom: 2px solid var(--scope-accent-color);
+}
+.system-Scope h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid var(--scope-accent-color);
+}
+.system-Scope .scopeLine {
+  border-bottom: 1px solid var(--scope-border-color);
+  box-shadow: 0 0 10px var(--scope-border-color-lighter);
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+.system-Scope #sidebar-tabs {
+  border-bottom: 1px solid var(--scope-border-color);
+  box-shadow: 0 0 10px var(--scope-border-color-lighter);
+}
+.system-Scope #sidebar-tabs > .item.active {
+  color: var(--scope-light-color-half);
+  border: 1px solid var(--scope-border-color);
+  border-bottom: none;
+  box-shadow: 0 0 6px inset var(--scope-border-color-lighter);
+}
+.system-Scope .sidebar-tab .directory-header .header-search input {
+  background: var(--scope-fg-color);
+}
+.system-Scope .sidebar-tab .directory-list .directory-item h4 {
+  color: var(--scope-text-light-color);
+}
+.system-Scope .sidebar-tab .directory-list .directory-item.scene h3 {
+  color: var(--scope-text-dark-color);
+}
+.system-Scope li.folder.collapsed > .folder-header h3 {
+  color: var(--scope-text-light-color);
+}
+.system-Scope #scenes .scene h3 {
+  color: var(--scope-text-light-color);
+  text-shadow: 1px 1px 5px var(--scope-text-dark-color);
+}
+.system-Scope a[href] {
+  color: var(--scope-accent-color);
+}
+.system-Scope a:hover {
+  color: var(--scope-text-light-color);
+  text-shadow: 0 0 8px var(--scope-accent-color);
+}
+.system-Scope a .entity-link,
+.system-Scope a .inline-roll {
+  background: var(--scope-fg-color);
+  border: 1px solid var(--scope-border-color);
+}
+.system-Scope .filepicker .directory > li:hover {
+  color: var(--scope-text-highlight-color);
+  text-shadow: 0 0 8px var(--scope-accent-color);
+}
+.system-Scope .tabs .item.active {
+  color: var(--scope-text-light-color);
+  text-shadow: 0 0 8px var(--scope-accent-color);
+}
+.system-Scope hr {
+  border-top: 1px solid var(--scope-border-color);
+  border-bottom: 1px solid var(--scope-border-color);
+}
+.system-Scope blockquote {
+  border-left: 3px solid var(--scope-border-color);
+}
+.system-Scope section.secret {
+  border-top: 1px solid var(--scope-border-color);
+  border-bottom: 1px solid var(--scope-border-color);
+}
+.system-Scope table {
+  border: 1px solid var(--scope-border-color);
+}
+.system-Scope .last {
+  border-bottom: 2px groove;
+  border-bottom-color: var(--scope-border-color);
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+.system-Scope .emulated-flex-gap {
+  --gap: 12px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  margin: calc(-1 * var(--gap)) 0 0 calc(-1 * var(--gap));
+  width: calc(100% + var(--gap));
+}
+.system-Scope .emulated-flex-gap > * {
+  margin: var(--gap) 0 0 var(--gap);
+}
+.system-Scope form button {
+  background: var(--scope-fg-color);
+  border: 1px groove var(--scope-border-color);
+}
+.system-Scope form .hint {
+  color: var(--scope-text-dark-color);
+}
+.system-Scope form .notes {
+  color: var(--scope-text-selection-color);
+  margin: 0;
+}
+.system-Scope form #bigendtext {
+  align-items: normal;
+}
+.system-Scope form #bigtext {
+  align-items: normal;
+}
+.system-Scope button {
+  color: var(--scope-text-dark-color);
+  background: var(--scope-fg-color);
+  border: 1px solid var(--scope-border-color);
+}
+.system-Scope button:hover {
+  background: var(--scope-accent-color);
+  color: var(--scope-text-light-color);
+  border: 1px groove var(--scope-border-color);
+  box-shadow: 0 0 5px var(--scope-accent-color);
+}
+.system-Scope .dialog .dialog-buttons button {
+  color: var(--scope-text-dark-color);
+  background: var(--scope-fg-color);
+  border: 1px solid var(--scope-border-color);
+}
+.system-Scope .dialog .dialog-buttons button .default {
+  color: var(--scope-text-dark-color);
+  background: var(--scope-fg-color);
+  border: 1px solid var(--scope-border-color);
+}
+.system-Scope .dialog .dialog-buttons button .default:hover {
+  background: var(--scope-accent-color);
+  color: var(--scope-text-light-color);
+  border: 1px groove var(--scope-border-color);
+  box-shadow: 0 0 5px var(--scope-accent-color);
+}
+.system-Scope .dialog .dialog-buttons button:hover {
+  background: var(--scope-accent-color);
+  color: var(--scope-text-light-color);
+  border: 1px groove var(--scope-border-color);
+  box-shadow: 0 0 5px var(--scope-accent-color);
+}
+.system-Scope select {
+  color: var(--scope-text-dark-color);
+  background: var(--scope-fg-color);
+  border: 1px solid var(--scope-border-color);
+}
+.system-Scope select:hover,
+.system-Scope select:focus {
+  box-shadow: 0px 0px 5px var(--scope-accent-color), 0px 0px 5px var(--scope-accent-color);
+}
+.system-Scope textarea {
+  color: var(--scope-text-dark-color);
+  background: var(--scope-fg-color);
+  border: 1px solid var(--scope-border-color);
+  font-family: inherit;
+  font-size: inherit;
+}
+.system-Scope textarea:focus {
+  outline: 2px solid var(--scope-border-color);
+  box-shadow: 0 0 10px var(--scope-border-color-lighter);
+}
+.system-Scope .range-value {
+  color: var(--scope-text-dark-color);
+  background: var(--scope-fg-color);
+  border: 1px solid var(--scope-border-color);
+}
+.system-Scope input[type="text"] {
+  background: var(--scope-fg-color);
+  border: 1px solid var(--scope-border-color);
+}
+.system-Scope input[type="text"]:hover,
+.system-Scope input[type="text"]:focus {
+  box-shadow: 0px 0px 5px var(--scope-accent-color), 0px 0px 5px var(--scope-accent-color);
+}
+.system-Scope input[type="color"][data-edit] {
+  color: var(--scope-text-dark-color-half);
+  background: var(--scope-fg-color);
+  border: 1px solid var(--scope-border-color);
+}
+.system-Scope input[type="color"][data-edit]:hover,
+.system-Scope input[type="color"][data-edit]:focus {
+  box-shadow: 0px 0px 5px var(--scope-accent-color), 0px 0px 5px var(--scope-accent-color);
+}
+.system-Scope input[type="range"] {
+  color: var(--scope-text-dark-color-half);
+  background: var(--scope-fg-color);
+  border: 1px solid var(--scope-border-color);
+}
+.system-Scope input[type="range"]:hover,
+.system-Scope input[type="range"]:focus {
+  box-shadow: 0px 0px 5px var(--scope-accent-color), 0px 0px 5px var(--scope-accent-color);
+}
+.system-Scope input[type="password"],
+.system-Scope input[type="range"] + .range-value,
+.system-Scope input[type="datetime-local"] {
+  color: var(--scope-text-dark-color-half);
+  background: var(--scope-fg-color);
+  border: 1px solid var(--scope-border-color);
+}
+.app {
+  color: var(--scope-text-light-color);
+  background-color: var(--scope-bg-color);
+  background-blend-mode: var(--scope-window-blend-mode);
+}
+.app.sidebar-popout {
+  color: var(--scope-text-light-color);
+}
+.window-content {
+  color: var(--scope-text-light-color);
+}
+.window-app .window-content {
+  color: var(--scope-text-dark-color);
+  background-color: var(--scope-bg-color);
+  background-blend-mode: var(--scope-sheet-blend-mode);
+}
+.window-app .window-resizable-handle {
+  background: var(--scope-bg-color);
+  border: 1px solid var(--scope-border-color);
+}
+#context-menu {
+  background: var(--scope-bg-color);
+  color: var(--scope-text-light-color);
+}
+#context-menu li.context-item:hover {
+  color: var(--scope-text-highlight-color);
+  text-shadow: 0 0 4px var(--scope-accent-color);
+}
+#module-management .package-list .package-title,
+#module-management .package-list .package-metadata,
+#module-management .package-list .package-description {
+  color: var(--scope-text-light-color);
+}
+nav.list-filters a.filter.active {
+  border-bottom: 2px solid var(--scope-border-color);
+}
+#WhetstoneCoreConfig .theme-list .theme-title,
+#WhetstoneCoreConfig .theme-list .theme-metadata,
+#WhetstoneCoreConfig .theme-list .theme-description {
+  color: var(--scope-text-dark-color);
+}
+#WhetstoneCoreConfig .form-group {
+  border-color: var(--scope-border-color);
+}
+#WhetstoneCoreConfig nav.tabs {
+  border-bottom: 2px solid var(--scope-border-color);
+}
+#WhetstoneThemeConfigDialog .form-group {
+  border-color: var(--scope-border-color);
+}
+#WhetstoneThemeConfigDialog nav.tabs {
+  border-bottom: 2px solid var(--scope-border-color);
+}

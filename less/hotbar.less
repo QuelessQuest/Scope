@@ -1,0 +1,29 @@
+#hotbar {
+  .bar-controls,
+  #macro-list {
+    color: var(--scope-text-light-color);
+    background: unset;
+    border: 1px solid var(--scope-border-color);
+    box-shadow: 0 0 3px var(--scope-border-color) inset;
+  }
+
+  .macro.inactive {
+    box-shadow: 0 0 5px var(--scope-border-color) inset;
+  }
+
+  .macro.active {
+    background: var(--scope-bg-color);
+    &:hover {
+      border: 1px solid var(--scope-accent-color);
+    }
+  }
+
+  .macro {
+    border: 1px solid var(--scope-border-color);
+    background: var(--scope-border-color-half);
+    box-shadow: 0 0 5px var(--scope-border-color) inset;
+    &:hover {
+      box-shadow: 0 0 5px var(--scope-accent-color) inset;
+    }
+  }
+}

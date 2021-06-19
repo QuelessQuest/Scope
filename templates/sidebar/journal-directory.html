@@ -1,0 +1,86 @@
+{{#*inline "folderPartial"}}
+<li class="directory-item folder flexcol {{#unless folder.expanded}}collapsed{{/unless}}"
+    data-folder-id="{{folder._id}}" data-folder-depth="{{folder.depth}}">
+    <header class="folder-header flexrow" style="background-color: {{folder.data.color}}">
+        <h3><i class="fas fa-folder-open fa-fw"></i>{{folder.name}}</h3>
+        {{#if user.isGM}}
+        <a class="create-folder" data-parent-folder="{{folder._id}}"><i class="fas fa-folder-plus fa-fw"></i></a>
+        <a class="create-entity" data-folder="{{folder._id}}"><i class="fas fa-feather-alt fa-fw"></i></a>
+        {{/if}}
+    </header>
+
+    <ol class="subdirectory">
+        {{~#each folder.children as |child i|}}
+        {{> folderPartial folder=child user=../user}}
+        {{/each}}
+        {{#each folder.content}}
+        {{> entityPartial}}
+        {{/each~}}
+    </ol>
+</li>
+{{/inline}}
+
+{{#*inline "entityPartial"}}
+<li class="directory-item entity journal flexrow" data-entity-id="{{this._id}}">
+    <h4 class="entity-name"><a>{{this.name}}</a></h4>
+</li>
+{{/inline}}
+
+<section class="sidebar-tab sidebar-directory tab flexcol" id="journal" data-tab="journal">
+
+    <!-- Directory Header -->
+    <header class="directory-header">
+        <!-- Focus -->
+        <div class="header-actions action-buttons flexrow">
+            <button type="button" class="journal focus"><i class="fas fa-crosshairs"></i>{{localize 'SCOPE.UpdateFocus'}}</button>
+        </div>
+        <!-- Main Creation Buttons -->
+        {{#if canCreate}}
+        <div class="header-actions action-buttons flexrow">
+            <button type="button" class="journal period"><i class="fas fa-book-open"></i>{{localize 'SCOPE.CreatePeriod'}}</button>
+            <button type="button" class="journal event"><i class="fas fa-file"></i>{{localize 'SCOPE.CreateEvent'}}</button>
+        </div>
+        <div class="header-actions action-buttons flexrow">
+            <button type="button" class="journal scene"><i class="fas fa-film"></i>{{localize 'SCOPE.CreateScene'}}</button>
+            <button type="button" class="journal legacy"><i class="fas fa-monument"></i>{{localize 'SCOPE.CreateLegacy'}}</button>
+        </div>
+        <div class="flexrow scopeLine"></div>
+        <!-- Start Creation Buttons -->
+        <div class="header-actions action-buttons flexrow">
+            <button type="button" class="journal picture"><i class="far fa-image"></i></i>{{localize 'SCOPE.JournalPicture'}}</button>
+            <button type="button" class="journal palette"><i class="fas fa-palette"></i>{{localize 'SCOPE.JournalPalette'}}</button>
+        </div>
+        <div class="header-actions action-buttons flexrow">
+            <button type="button" class="journal bookends"><i class="fas fa-grip-lines-vertical"></i>{{localize 'SCOPE.CreateBookends'}} <i class="fas fa-grip-lines-vertical"></i></button>
+        </div>
+        {{/if}}
+        <div class="flexrow scopeLine"></div>
+        <div class="header-actions action-buttons flexrow">
+            <button type="button" class="journal arrange"><i class="fas fa-project-diagram"></i>{{localize 'SCOPE.JournalArrange'}}</button>
+        </div>
+        <div class="flexrow scopeLine"> </div>
+        <div class="header-actions action-buttons flexrow">
+            {{#if canCreate}}
+            <button class="create-entity"><i class="fas fa-feather"></i> {{localize 'JOURNAL.Create'}}</button>
+            {{/if}}
+            {{#if user.isGM }}
+            <button class="create-folder"><i class="fas fa-folder"></i> {{localize 'FOLDER.Create'}}</button>
+            {{/if}}
+        </div>
+        <div class="header-search flexrow">
+            <i class="fas fa-search"></i>
+            <input type="text" name="search" value="" placeholder="{{localize 'JOURNAL.Search'}}" autocomplete="off"/>
+            <a class="header-control collapse-all" title="{{localize 'FOLDER.Collapse'}}"><i class="fas fa-sort-amount-up fa-fw"></i></a>
+        </div>
+    </header>
+
+    <!-- Directories List -->
+    <ol class="directory-list">
+        {{~#each tree.children as |f fi|}}
+        {{> folderPartial folder=f user=../user}}
+        {{/each}}
+        {{#each tree.content}}
+        {{> entityPartial}}
+        {{/each~}}
+    </ol>
+</section>
