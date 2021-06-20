@@ -10,19 +10,20 @@ export function isEmpty(thing) {
 }
 
 export async function insertNote(id, {x, y}) {
-  const noteData = {
+  const noteData = new foundry.data.NoteData({
     entryId: id,
     x: x,
     y: y,
     icon: CONST.DEFAULT_NOT_ICON,
-    textAnchor: CONT.TEXT_ANCHOR_POINTS.CENTER
-  };
+    textAnchor: CONST.TEXT_ANCHOR_POINTS.CENTER
+  });
 
   if ( !canvas.grid.hitArea.contains(x, y) ) return false;
 
   canvas.notes.activate();
-  let note = new Note(noteData);
-  await note.constructor.create(noteData);
+  Note.create(noteData);
+  //let note = new Note(noteData);
+  //await note.constructor.create(noteData);
 }
 
 /**
@@ -176,4 +177,32 @@ export function registerSettings() {
     onChange: () => {
     }
   });
+}
+
+export function droppedOn(scene, note, targetCard) {
+  let shiftIt = {};
+  // Is it on top of target
+  let targetNote = scene.getEmbeddedDocument("Note", targetCard.noteId);
+  if ( SCOPE.bump.hitTestRectangle(note, targetNote) ) {
+    const amount = (SCOPE.noteSettings[this.type].spacing[this.sortDirection]
+        - (card[this.sortDirection]
+            - targetCard[this.sortDirection]))
+        + (SCOPE.noteSettings[this.type].spacing[this.sortDirection]
+            + SCOPE.noteSettings.spacing);
+    shiftIt = {card: card, amount: amount};
+  }
+  // Is it on top of targets next
+  if ( targetCard.next ) {
+    let targetNextNote = scene.getEmbeddedDocument("Note", targetCard.next.noteId);
+    if ( SCOPE.bump.hitTestRectangle(note, targetNextNote) ) {
+      const amount = (SCOPE.noteSettings[this.type].spacing[this.sortDirection]
+          - (card[this.sortDirection]
+              - targetCard.next[this.sortDirection]))
+          + (SCOPE.noteSettings[this.type].spacing[this.sortDirection]
+              + SCOPE.noteSettings.spacing);
+      shiftIt = {card: targetCard.next, amount: amount};
+    }
+  }
+
+  return shiftIt;
 }

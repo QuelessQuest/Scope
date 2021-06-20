@@ -1,0 +1,29 @@
+<form id="journal-scope-create-event" autocomplete="off">
+    <div class="form-group">
+        <label>{{localize "SCOPE.JournalShortName"}}</label>
+        <input type="text" name="name" placeholder="{{name}}"/>
+    </div>
+    <div class="form-group" id="bigtext">
+        <label>{{localize "SCOPE.JournalDescription"}}</label>
+        <textarea rows="4" name="desc" placeholder='{{localize "SCOPE.JournalDescription"}}'>
+        </textarea>
+    </div>
+    <div class="form-group">
+        <label>{{localize "SCOPE.JournalTone"}}</label>
+        <div class="form-fields">
+            {{radioBoxes tone tones checked=chosen localize=true}}
+        </div>
+    </div>
+    <div class="last"></div>
+    <div class="form-group">
+        <div class="flexcol">
+            <label>{{localize "SCOPE.InsertAfter"}} {{localize "SCOPE.JournalPeriod"}}</label>
+            <p class="notes">{{localize "SCOPE.Optional"}}</p>
+        </div>
+        <select class="scope select event" name="periodAttach">
+            {{selectOptions periodCards selected=cardSelected localize=false}}
+        </select>
+    </div>
+    <input type="text" name="folderId" value="{{folderId}}" hidden/>
+    <div class="last"></div>
+</form>

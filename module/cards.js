@@ -1,5 +1,6 @@
 import {SCOPE} from "./config.js";
 import {CardScope} from "./scope-classes.js";
+import {droppedOn} from "./helper.js";
 
 export class CardList {
   /**
@@ -38,10 +39,10 @@ export class CardList {
     let card = new CardScope(note);
     card.children = new CardList(SCOPE.sortDirection.opposite[this.sortDirection], SCOPE.relationships[this.type].child);
     if ( this.head ) {
+      let scene = game.scenes.getName("Scope");
       let targetCard = this._findTargetCard(this.sortDirection, note.data[this.sortDirection], this.head);
-      let shiftIt = null;
       if ( targetCard ) {
-        const shiftIt = droppedOn(targetCard);
+        const shiftIt = droppedOn(scene, note, targetCard);
 
         if ( clearDrawing && targetCard.connectors.next[this.sortDirection] )
           await canvas.drawings.deleteMany([targetCard.connectors.next[this.sortDirection]]);
@@ -93,6 +94,7 @@ export class CardList {
     if ( !card ) return false;
 
     let removeDrawings = [];
+    let scene = game.scenes.getName("Scope");
 
     // Is the head of the list being removed?
     if ( this.head.id === card.id ) {
@@ -109,7 +111,7 @@ export class CardList {
           this.parent.connectors.next[this.sortDirection] = cid;
         }
       }
-      await canvas.drawings.deleteMany(removeDrawings);
+      await scene.deleteEmbeddedDocuments("Drawing", removeDrawings);
       return;
     }
 
@@ -121,7 +123,7 @@ export class CardList {
     if ( card.connectors.prev[this.sortDirection] ) removeDrawings.push(card.connectors.prev[this.sortDirection]);
     if ( card.connectors.next[this.sortDirection] ) removeDrawings.push(card.connectors.next[this.sortDirection]);
 
-    await canvas.drawings.deleteMany(removeDrawings);
+    await scene.deleteEmbeddedDocuments("Drawing", removeDrawings);
     if ( card.prev ) {
       let did = await this._createConnection(card.prev, card.next);
       if ( card.prev.next ) {

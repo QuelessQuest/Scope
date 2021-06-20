@@ -177,9 +177,9 @@ export class JournalDirectoryScope extends JournalDirectory {
                   const form = html[0].querySelector("form");
                   const fd = new FormDataExtended(form);
                   let fo = fd.toObject();
-                  this._createJournalEntry(this.constructor.cls, fo.name, fo.tone, data.folderId, fo, "period").then(e => {
+                  this._createJournalEntry(fo.name, fo.tone, data.folderId, fo, "period").then(e => {
                     const startId = e.id;
-                    this._createJournalEntry(this.constructor.cls, fo.endName, fo.endTone, data.folderId, fo, "period").then(e2 => {
+                    this._createJournalEntry(fo.endName, fo.endTone, data.folderId, fo, "period").then(e2 => {
                       const position = getBookendPositions();
                       insertNote(startId, position.start).then(() => {
                         insertNote(e2.id, position.end).then(() => {
@@ -281,7 +281,7 @@ export class JournalDirectoryScope extends JournalDirectory {
         const form = html[0].querySelector("form");
         const fd = new FormDataExtended(form);
         let fo = fd.toObject();
-        this._createJournalEntry(this.constructor.cls, fo.name, fo.folderId, fo, type).then( e => {
+        this._createJournalEntry(fo.name, fo.tone, fo.folderId, fo, type).then( e => {
           this._maybeCreateNote(e.getFlag("Scope", "periodAttach"), e.getFlag("Scope", "eventAttach"), type, e.id);
         });
     });
@@ -289,7 +289,6 @@ export class JournalDirectoryScope extends JournalDirectory {
 
   /**
    * Create the Journal Entry from the form data.
-   * @param cls
    * @param name {string}
    * @param tone {string}
    * @param folderId {string}
@@ -298,7 +297,7 @@ export class JournalDirectoryScope extends JournalDirectory {
    * @returns
    * @private
    */
-  async _createJournalEntry(cls, name, tone, folderId, fo, type) {
+  async _createJournalEntry(name, tone, folderId, fo, type) {
     const content = await renderTemplate(`systems/scope/templates/journal/journal-${type}.html`, fo);
     let eventAttach = "none";
     if ( fo.eventAttach ) eventAttach = fo.eventAttach;
@@ -316,7 +315,7 @@ export class JournalDirectoryScope extends JournalDirectory {
       }
     };
 
-    return cls.create(createData, {renderSheet: false, cardType: type});
+    return JournalEntry.create(createData, {renderSheet: false, cardType: type});
   }
 
   /**

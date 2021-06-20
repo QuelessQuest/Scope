@@ -6,6 +6,7 @@ import {registerSettings} from "./module/helper.js";
 import {isEmpty} from "./module/helper.js";
 import {getFromTheme} from "./module/helper.js";
 import {insertNote} from "./module/helper.js";
+import {patchCore} from "./module/patch.js";
 
 /**
  * Sets up the environment and manages the hooks.
@@ -24,6 +25,7 @@ Hooks.once("init", function () {
   game.scope.period = new CardList(SCOPE.sortDirection.horizontal, "period");
 
   registerSettings();
+  patchCore();
 
   game.scope.bookend = game.settings.get('Scope', 'bookend') || SCOPE.Bookends.position;
 });
@@ -224,6 +226,9 @@ async function _createFolder(folders, folder, type) {
  */
 Hooks.on("canvasReady", async () => {
 
+  // Initialize the collision detection. Used to determine if cards overlap
+  SCOPE.bump = new Bump(PIXI);
+
   let scene = game.scenes.getName("Scope");
 
   // Remove any existing connectors from the scene
@@ -260,7 +265,7 @@ Hooks.on("canvasReady", async () => {
 /**
  * When a journal entry is dropped onto the canvas, create a note
  */
-Hooks.on("dropCanvasData", (entity, data) => {
+Hooks.on("dropCanvasData", (canvas, data) => {
   if ( data.type !== "JournalEntry" ) return;
   const type = game.journal.get(data.id).getFlag("Scope", "type");
   switch (type) {
@@ -276,4 +281,130 @@ Hooks.on("dropCanvasData", (entity, data) => {
   }
 
   return false;
+});
+
+/**
+ * Rerender the connectors when the note is moved.
+ */
+Hooks.on("updateNote", async (entity, d, options, userid) => {
+  const noteId = d._id;
+  if ( !game.scope.period.canRefresh ) return;
+  await game.scope.period.updateCard(noteId, {x: d.x, y: d.y});
+});
+
+/**
+ * Update the note icon and draw the note and add it to the
+ * appropriate note list.
+ */
+Hooks.on("createNote", async (noteDocument, options) => {
+
+
+  Object.defineProperty(noteDocument, "centerX", {
+    get: function get() {
+      return noteDocument.x;
+    },
+    enumerable: true, configurable: true
+  });
+  Object.defineProperty(noteDocument, "centerY", {
+    get: function get() {
+      return noteDocument.y;
+    },
+    enumerable: true, configurable: true
+  });
+
+  const entry = game.journal.get(noteDocument.data.entryId);
+  const tone = entry.getFlag("Scope", "tone");
+  const type = entry.getFlag("Scope", "type");
+  const periodAttach = entry.getFlag("Scope", "periodAttach");
+  const eventAttach = entry.getFlag("Scope", "eventAttach");
+  let periodNoteId = "none";
+  let eventNoteId = "none";
+  if ( periodAttach && periodAttach !== "none" ) {
+    periodNoteId = game.scope.period.findCard("id", periodAttach).noteId;
+  }
+
+  let flagData = SCOPE.noteSettings[type];
+  let flagTypeData = {
+    tone: tone,
+    labelBorderColor: getFromTheme(`${type}-label-stroke-color`),
+    noteBorderColor: getFromTheme("border-color"),
+    periodNote: periodNoteId,
+    eventNote: eventNoteId
+  }
+  flagData = foundry.utils.mergeObject(flagData, flagTypeData);
+  const flags = {
+    Scope: flagData
+  }
+
+  let typeData = {
+    _id: noteDocument.data._id,
+    text: entry.data.name,
+    icon: SCOPE.icons[type],
+    iconSize: SCOPE.noteSettings[type].iconWidth,
+    iconTint: getFromTheme(`${type}-icon-color`),
+    fontSize: getFromTheme(`${type}-label-size`),
+    textColor: getFromTheme(`${type}-label-color`),
+    flags: flags
+  }
+
+  game.scope.period.lockRefresh();
+  let scene = game.scenes.getName("Scope");
+  await scene.updateEmbeddedDocuments("Note", [typeData]);
+  game.scope.period.unlockRefresh();
+
+  switch (type) {
+    case "period":
+      await game.scope.period.add(noteDocument);
+      break;
+    case "event":
+      // TODO - Need to calculate the notes x/y if not dropped, but attached
+      if ( periodAttach !== "none" ) {
+        if ( eventAttach === "none" )
+          await game.scope.period.attach(type, noteDocument, periodAttach);
+        else {
+          const periodCard = game.scope.period.findCard("id", periodAttach, game.scope.period.head);
+          periodCard.children.add(noteDocument);
+        }
+      }
+      break;
+    case "scene":
+      break;
+    case "legacy":
+      break;
+  }
+});
+
+
+/**
+ * If a note is deleted, remove it from the appropriate list and remove
+ * any associated drawings.
+ */
+Hooks.on("deleteNote", async (noteDocument, options, userId) => {
+  await _deleteNote(noteDocument.data._id);
+});
+
+/**
+ *
+ * @param noteId {String}
+ * @private
+ */
+async function _deleteNote(noteId) {
+  console.log("Deleting Note with id: " + noteId);
+  let scene = game.scenes.getName("Scope");
+  await game.scope.period.remove(noteId);
+  //await scene.deleteEmbeddedDocuments("Note", [{_id: noteId}]);
+}
+
+/**
+ * JOURNAL HANDLING ===========================================================
+ */
+
+
+/**
+ * If a JournalEntry is removed, so is the associated note and any connectors
+ */
+Hooks.on("deleteJournalEntry", async (entity, options, userId) => {
+  let note = entity.sceneNote;
+  if ( !note ) return;
+  await _deleteNote(note.id);
 });
