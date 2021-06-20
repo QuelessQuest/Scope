@@ -1,6 +1,8 @@
 import {SCOPE} from "./config.js";
 import {CardScope} from "./scope-classes.js";
 import {droppedOn} from "./helper.js";
+import {isEmpty} from "./helper.js";
+import {getFromTheme} from "./helper.js";
 
 export class CardList {
   /**
@@ -45,7 +47,11 @@ export class CardList {
         const shiftIt = droppedOn(scene, note, targetCard);
 
         if ( clearDrawing && targetCard.connectors.next[this.sortDirection] )
-          await canvas.drawings.deleteMany([targetCard.connectors.next[this.sortDirection]]);
+          try {
+            await scene.deleteEmbeddedDocuments("Drawing", [targetCard.connectors.next[this.sortDirection]]);
+          } catch (ex) {
+            console.log("Attempted to delete a non-existent drawing. Just carry on.");
+          }
 
         // Establish next next/prev on new card before creating connections. This allows the cards to
         // be shifted, if necessary, and only draw the connections once.
@@ -54,17 +60,27 @@ export class CardList {
           card.next = targetCard.next;
         }
 
-        if ( shiftIt !== null ) await this._shiftFrom(shiftIt);
+        if ( shiftIt !== null && !isEmpty(shiftIt) ) await this._shiftFrom(shiftIt);
 
-        let cid = await this._createConnection(targetCard, card);
-        card.connectors.prev[this.sortDirection] = cid;
-        targetCard.connectors.next[this.sortDirection] = cid;
+        let cid = await this._createConnection(scene, targetCard, card);
+        if (this.sortDirection === SCOPE.sortDirection.horizontal) {
+          card.connectors.prev = {x: cid, y: ""};
+          targetCard.connectors.next = {x: cid, y: ""};
+        } else {
+          card.connectors.prev = {x: "", y: cid};
+          targetCard.connectors.next = {x: "", y: cid};
+        }
 
         if ( targetCard.next ) {
           targetCard.next.prev = card;
-          cid = await this._createConnection(card, targetCard.next);
-          card.connectors.next[this.sortDirection] = cid;
-          targetCard.next.connectors.prev[this.sortDirection] = cid;
+          cid = await this._createConnection(scene, card, targetCard.next);
+          if (this.sortDirection === SCOPE.sortDirection.horizontal) {
+            card.connectors.next = {x: cid, y: ""};
+            targetCard.next.connectors.prev = {x: cid, y: ""};
+          } else {
+            card.connectors.next = {x: "", y: cid};
+            targetCard.next.connectors.prev = {x: "", y: cid};
+          }
         }
         targetCard.next = card;
         console.log("HERE");
@@ -81,6 +97,7 @@ export class CardList {
    * Remove a card from the list
    */
   async remove(noteId) {
+
     let card = this.findCard("noteId", noteId);
     if ( !card ) {
       let ptr = this.head;
@@ -106,12 +123,16 @@ export class CardList {
       if ( this.parent ) {
         removeDrawings.push(this.parent.connectors.next[this.sortDirection]);
         if ( this.head ) {
-          let cid = await this._createConnection(this.parent, this.head);
+          let cid = await this._createConnection(scene, this.parent, this.head);
           this.head.connectors.prev[this.sortDirection] = cid;
           this.parent.connectors.next[this.sortDirection] = cid;
         }
       }
-      await scene.deleteEmbeddedDocuments("Drawing", removeDrawings);
+      try {
+        await scene.deleteEmbeddedDocuments("Drawing", removeDrawings);
+      } catch (ex) {
+        console.log("Attempted to delete a non-existent drawing. Just carry on.");
+      }
       return;
     }
 
@@ -123,9 +144,14 @@ export class CardList {
     if ( card.connectors.prev[this.sortDirection] ) removeDrawings.push(card.connectors.prev[this.sortDirection]);
     if ( card.connectors.next[this.sortDirection] ) removeDrawings.push(card.connectors.next[this.sortDirection]);
 
-    await scene.deleteEmbeddedDocuments("Drawing", removeDrawings);
+    try {
+      await scene.deleteEmbeddedDocuments("Drawing", removeDrawings);
+    } catch (ex) {
+      console.log("Attempted to delete a non-existent drawing. Just carry on.");
+    }
+
     if ( card.prev ) {
-      let did = await this._createConnection(card.prev, card.next);
+      let did = await this._createConnection(scene, card.prev, card.next);
       if ( card.prev.next ) {
         card.prev.connectors.next[this.sortDirection] = did;
         card.prev.next.connectors.prev[this.sortDirection] = did;
@@ -211,32 +237,33 @@ export class CardList {
     // If moving the head of a child list, remove the head -> parent connector
     if ( this.parent && this.head.id === card.id ) drawingIds.push(card.connectors.prev[this.sortDirection]);
 
-    await canvas.drawings.deleteMany(drawingIds);
+    let scene = game.scenes.getName("Scope");
+    await scene.deleteEmbeddedDocuments("Drawing", drawingIds);
 
     // Re-establish next connector
     if ( card.next ) {
-      const cid = await this._createConnection(card, card.next);
+      const cid = await this._createConnection(scene, card, card.next);
       card.connectors.next[this.sortDirection] = cid;
       card.next.connectors.prev[this.sortDirection] = cid;
     }
 
     // Re-establish prev connector
     if ( card.prev ) {
-      const cid = await this._createConnection(card.prev, card);
+      const cid = await this._createConnection(scene, card.prev, card);
       card.connectors.prev[this.sortDirection] = cid;
       card.prev.connectors.next[this.sortDirection] = cid;
     }
 
     // Re-establish parent -> child list connector
     if ( card.children.head !== null ) {
-      const cid = await card.children._createConnection(card, card.children.head);
+      const cid = await card.children._createConnection(scene, card, card.children.head);
       card.connectors.next[SCOPE.sortDirection.opposite[this.sortDirection]] = cid;
       card.children.head.connectors.prev[card.children.sortDirection] = cid;
     }
 
     // Re-establish child list head -> parent connector
     if ( this.parent && this.head.id === card.id ) {
-      const cid = await this._createConnection(this.parent, card);
+      const cid = await this._createConnection(scene, this.parent, card);
       card.connectors.prev[this.sortDirection] = cid;
       this.parent.connectors.next[this.sortDirection] = cid;
     }
@@ -271,13 +298,14 @@ export class CardList {
    */
   async arrangeList(bookend) {
 
+    let scene = game.scenes.getName("Scope");
     let drawingIds = [];
     let childLists = [];
 
     if ( this.head.children.head !== null ) childLists.push(this.head.children);
     if ( this.parent ) {
       drawingIds.push(this.head.connectors.prev[this.sortDirection]);
-      const cid = await this._createConnection(this.parent, this.head);
+      const cid = await this._createConnection(scene, this.parent, this.head);
       this.parent.connectors.next[this.sortDirection] = cid;
       this.head.connectors.prev[this.sortDirection] = cid;
     }
@@ -289,7 +317,7 @@ export class CardList {
       ptr.x = newLocation.x;
       ptr.y = newLocation.y;
       drawingIds.push(ptr.connectors.prev[this.sortDirection]);
-      const cid = await this._createConnection(ptr.prev, ptr);
+      const cid = await this._createConnection(scene, ptr.prev, ptr);
       ptr.prev.connectors.next[this.sortDirection] = cid;
       ptr.connectors.prev[this.sortDirection] = cid;
       if ( ptr.next ) {
@@ -297,7 +325,7 @@ export class CardList {
         // arranging by bookends.
         if ( !ptr.next.next && bookend ) {
           drawingIds.push(ptr.connectors.next[this.sortDirection]);
-          const eid = await this._createConnection(ptr, ptr.next);
+          const eid = await this._createConnection(scene, ptr, ptr.next);
           ptr.connectors.next[this.sortDirection] = eid;
           ptr.next.connectors.prev[this.sortDirection] = eid;
           ptr = null;
@@ -388,6 +416,7 @@ export class CardList {
   }
 
   async attach(type, note, cardId) {
+    let scene = game.scenes.getName("Scope");
     let targetCard;
     if ( cardId ) {
       targetCard = this.findCard("id", cardId);
@@ -403,7 +432,7 @@ export class CardList {
     let card = await targetCard.children.add(note);
     let children = targetCard.children;
     if ( !children.head.connectors.prev[children.sortDirection] ) {
-      let cid = await children._createConnection(targetCard, card);
+      let cid = await children._createConnection(scene, targetCard, card);
       targetCard.connectors.next[children.sortDirection] = cid;
       children.head.connectors.prev[children.sortDirection] = cid;
     }
@@ -478,16 +507,26 @@ export class CardList {
 
   /**
    * Create the drawing element that connects two cards
+   * @param scene
    * @param card1 {CardScope}
    * @param card2 {CardScope}
    * @private
    */
-  async _createConnection(card1, card2) {
+  async _createConnection(scene, card1, card2) {
+    let blankConnector = {x: "", y: ""};
+    if ( card1 ) {
+      card1.connectors.next = blankConnector;
+      card1.connectors.prev = blankConnector;
+    }
+    if ( card2 ) {
+      card2.connectors.next = blankConnector;
+      card2.connectors.prev = blankConnector;
+    }
     if ( !card1 || !card2 ) return;
-    let options = SCOPE.connectors;
+    let options = {};
+    options = Object.assign(options, SCOPE.connectors);
     let points = [[0, 0], [card2.x - card1.x, card2.y - card1.y]];
     let dynamicOptions = {
-      author: game.user._id,
       x: card1.x,
       y: card1.y,
       points: points,
@@ -495,11 +534,11 @@ export class CardList {
       height: Math.abs(card2.y - card1.y),
       strokeColor: getFromTheme("period-link-color")
     }
-    mergeObject(options, dynamicOptions);
-    let d = await Drawing.create(options);
-    if ( game.settings.get("Scope", "dropShadow") )
-      d.filters = [new PIXI.filters.DropShadowFilter()];
-    return d.id;
+
+    foundry.utils.mergeObject(options, dynamicOptions);
+    let d = await DrawingDocument.create(options, {parent: canvas.scene});
+    //scene.createEmbeddedDocuments("Drawing", [d]);
+    return d.data._id;
   }
 
   /**

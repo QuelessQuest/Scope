@@ -79,13 +79,13 @@ SCOPE.icons = {
 }
 
 SCOPE.connectors = {
+    t: CONST.DRAWING_TYPES.FREEHAND,
     type: CONST.DRAWING_TYPES.FREEHAND,
     flags: {
       Scope: {
         type: "connector"
       }
     },
-    length: 2,
     fillType: CONST.DRAWING_FILL_TYPES.NONE,
     strokeWidth: 8,
     strokeAlpha: 1,

@@ -21,19 +21,16 @@ export class CardScope {
     let je = game.journal.get(this.entry);
     this.name = je.data.name;
     this.connectors = {
-      prev: {
-        x: "",
-        y: ""
-      },
-      next: {
-        x: "",
-        y: ""
-      }
+      prev: {},
+      next: {}
     }
     this.x = noteDocument.data.x;
     this.y = noteDocument.data.y;
     this._id = foundry.utils.randomID();
     this._children = null;  // This note may have an additional list attached
+    this.connectors.prev = {x: "", y: ""};
+    this.connectors.next = {x: "", y: ""};
+
   }
 
   get id() {

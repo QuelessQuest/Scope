@@ -234,7 +234,7 @@ Hooks.on("canvasReady", async () => {
   // Remove any existing connectors from the scene
   let drawings = scene.getEmbeddedCollection("Drawing");
   let drawingsToClear = drawings.filter(d => d.getFlag("Scope", "type") === "connector").map(d => d.data._id);
-  if (drawingsToClear.length > 0) drawings.deleteEmbeddedDocuments("Drawing", drawingsToClear);
+  if (drawingsToClear.length > 0) scene.deleteEmbeddedDocuments("Drawing", drawingsToClear);
 
   let notes = scene.getEmbeddedCollection("Note");
 
@@ -297,7 +297,6 @@ Hooks.on("updateNote", async (entity, d, options, userid) => {
  * appropriate note list.
  */
 Hooks.on("createNote", async (noteDocument, options) => {
-
 
   Object.defineProperty(noteDocument, "centerX", {
     get: function get() {
