@@ -5,6 +5,7 @@ import {CardList} from "./module/cards.js";
 import {registerSettings} from "./module/helper.js";
 import {isEmpty} from "./module/helper.js";
 import {getFromTheme} from "./module/helper.js";
+import {insertNote} from "./module/helper.js";
 
 /**
  * Sets up the environment and manages the hooks.
@@ -23,12 +24,15 @@ Hooks.once("init", function () {
   game.scope.period = new CardList(SCOPE.sortDirection.horizontal, "period");
 
   registerSettings();
+
+  game.scope.bookend = game.settings.get('Scope', 'bookend') || SCOPE.Bookends.position;
 });
 
 Hooks.once("ready", async function() {
   await _prepareScene();
   await _prepareFolders();
   game.journal.directory.activate();
+  canvas.notes.activate();
 });
 
 /**
@@ -68,9 +72,10 @@ async function _prepareScene() {
  */
 async function _prepareSceneText(scene) {
   console.log("Preparing Scene Text");
-  let bpd = scene.drawings.filter(d => d.getFlag("Scope", "type") === "bigPicture");
-  let fld = scene.drawings.filter(d => d.getFlag("Scope", "type") === "focusLabel");
-  let fd = scene.drawings.filter(d => d.getFlag("Scope", "type") === "focus");
+  let drawings = scene.getEmbeddedCollection("Drawing");
+  let bpd = drawings.filter(d => d.getFlag("Scope", "type") === "bigPicture");
+  let fld = drawings.filter(d => d.getFlag("Scope", "type") === "focusLabel");
+  let fd = drawings.filter(d => d.getFlag("Scope", "type") === "focus");
   let bp;
   let focus;
   if ( bpd.length > 0 ) {
@@ -88,10 +93,10 @@ async function _prepareSceneText(scene) {
   }
 
   game.scope.focus = {
-    id: focus._id,
-    text: focus.text,
-    bpId: bp._id,
-    bpText: bp.text
+    id: focus.data._id,
+    text: focus.data.text,
+    bpId: bp.data._id,
+    bpText: bp.data.text
   }
 }
 
@@ -147,10 +152,8 @@ function _getText(scene, type) {
 
   let drawings = scene.getEmbeddedCollection("Drawing");
   if ( drawings.size > 0 ) {
-    let scopeText = scene.getEmbeddedCollection("Drawing").filter(d => d.getFlag("Scope", "ftype") === "t")
-    //let drawings = scene.data.drawings.filter(d => d.flags["Scope"] && d.flags["Scope"]["ftype"] === CONST.DRAWING_TYPES.TEXT);
+    let scopeText = drawings.filter(d => d.getFlag("Scope", "ftype") === "t")
     if (scopeText.length > 0) {
-    //if ( drawings.size > 0 ) {
       const fd = scopeText.find(f => f.getFlag("Scope","type") === type);
       if ( fd )
         return fd;
@@ -169,7 +172,9 @@ function _getText(scene, type) {
  * @private
  */
 async function _prepareFolders() {
+  console.log("FOLDERS");
   const folder = game.i18n.localize("SCOPE.JournalFolder");
+  console.log(game.folders);
   let journalFolders = game.folders.filter(f => f.type === "JournalEntry");
   await _createFolder(journalFolders, folder, "period");
   await _createFolder(journalFolders, folder, "event");
@@ -199,9 +204,76 @@ async function _createFolder(folders, folder, type) {
     }
   });
 
+  let f;
   if ( !folders.find(f => f.data.flags) )
     if ( !folders.find(f => f.getFlag("Scope", "type") === type) ) {
       console.log(`Creating ${name} ${folder}`);
-      new Folder(folderData);
+      f = await Folder.create(folderData);
     }
+
+  console.log(f);
 }
+
+/**
+ * NOTE PREPARATION ===========================================================
+ */
+
+/**
+ * When all is ready, make the notes layer the active layer. Everything interactive
+ * happens on the notes layer.
+ */
+Hooks.on("canvasReady", async () => {
+
+  let scene = game.scenes.getName("Scope");
+
+  // Remove any existing connectors from the scene
+  let drawings = scene.getEmbeddedCollection("Drawing");
+  let drawingsToClear = drawings.filter(d => d.getFlag("Scope", "type") === "connector").map(d => d.data._id);
+  if (drawingsToClear.length > 0) drawings.deleteEmbeddedDocuments("Drawing", drawingsToClear);
+
+  let notes = scene.getEmbeddedCollection("Note");
+
+  // Rebuild the period list, adding back connectors
+  let periodNotes = notes.filter(n => n.getFlag("Scope", "type") === "period");
+  for (const period of periodNotes) {
+    await game.scope.period.add(period);
+  }
+
+  // Rebuild the events, adding back connectors
+  let eventNotes = notes.filter(n => n.getFlag("Scope", "type" ) === "event");
+  let eventGroups = eventNotes.reduce((r, a) => {
+    const periodNote = a.getFlag("Scope", "periodNote");
+    r[periodNote] = [...r[periodNote] || [], a];
+    return r;
+  }, {});
+
+  for (const group in eventGroups) {
+    let period = game.scope.period.findCard("noteId", group);
+    eventGroups[group].forEach(note => game.scope.period.attach("event", note, period.id));
+  }
+});
+
+/**
+ * NOTE HANDLING ===========================================================
+ */
+
+/**
+ * When a journal entry is dropped onto the canvas, create a note
+ */
+Hooks.on("dropCanvasData", (entity, data) => {
+  if ( data.type !== "JournalEntry" ) return;
+  const type = game.journal.get(data.id).getFlag("Scope", "type");
+  switch (type) {
+    case "period":
+      insertNote(data.id, {x: data.x, y: data.y});
+      break;
+    case "event":
+      break;
+    case "scene":
+      break;
+    case "legacy":
+      break;
+  }
+
+  return false;
+});
