@@ -19,7 +19,7 @@ export class JournalDirectoryScope extends JournalDirectory {
     html.find(".header-actions .journal.period").click(e => this._onCreateCard(e, "period"));
     html.find(".header-actions .journal.event").click(e => this._onCreateCard(e, "event"));
     html.find(".header-actions .journal.scene").click(e => this._onCreateCard(e, "scene"));
-    html.find(".header-actions .journal.legacy").click(e => this._onCreateCard(e, "legacy"));
+    html.find(".header-actions .journal.legacy").click(e => this._onCreateText(e, "legacy"));
     html.find(".header-actions .journal.palette").click(e => this._onCreatePalette(e));
     html.find(".header-actions .journal.bookends").click(e => this._onCreateBookends(e));
     html.find(".header-actions .journal.arrange").click(e => arrange());

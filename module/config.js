@@ -92,14 +92,59 @@ SCOPE.connectors = {
     fillAlpha: 1
 }
 
+SCOPE.legacies = ["one", "two", "three", "four", "five"];
+
 SCOPE.namespace = {
   focus: {
     id: "",
     text: ""
   },
+  legacies: [],
   period: {},
   bookend: 0,
   attached: false
+}
+
+SCOPE.legacyListStart = 100;
+
+SCOPE.legacy = {
+  t: CONST.DRAWING_TYPES.TEXT,
+  type: CONST.DRAWING_TYPES.TEXT,
+  pendingX: 1117,
+  width: 464,
+  height: 75,
+  fillType: CONST.DRAWING_FILL_TYPES.NONE,
+  fillColor: "",
+  fillAlpha: 0,
+  strokeWidth: 0,
+  strokeColor: "",
+  strokeAlpha: 0,
+  texture: "",
+  textureAlpha: 0,
+  fontSize: 40,
+  locked: true,
+  points: []
+}
+
+SCOPE.legacyLabel = {
+  t: CONST.DRAWING_TYPES.TEXT,
+  type: CONST.DRAWING_TYPES.TEXT,
+  pendingX: 1117,
+  y: 25,
+  width: 388,
+  height: 107,
+  fillType: CONST.DRAWING_FILL_TYPES.NONE,
+  fillColor: "",
+  fillAlpha: 0,
+  strokeWidth: 0,
+  strokeColor: "",
+  strokeAlpha: 0,
+  texture: "",
+  textureAlpha: 0,
+  text: "Legacies",
+  fontSize: 48,
+  locked: true,
+  points: []
 }
 
 SCOPE.focus = {
@@ -196,8 +241,10 @@ SCOPE.scene = {
 }
 
 SCOPE.themeDefaults = {
-  "--scope-focus-label-color": "#601F1F",
-  "--scope-focus-color": "#713737",
+  "--scope-focus-label-color": "#7F7F7F80",
+  "--scope-focus-color": "#872C2C",
+  "--scope-legacy-label-color": "#7F7F7F80",
+  "--scope-legacy-color": "#872C2C",
   "--scope-period-label-color": "#EDEDED",
   "--scope-period-label-stroke-color": "#292929",
   "--scope-period-label-size": 24,

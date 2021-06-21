@@ -69,6 +69,7 @@ async function _prepareScene() {
 
 /**
  * Create the on scene text data
+ * @param {Scene} scene
  * @returns {Promise<void>}
  * @private
  */
@@ -78,70 +79,102 @@ async function _prepareSceneText(scene) {
   let bpd = drawings.filter(d => d.getFlag("Scope", "type") === "bigPicture");
   let fld = drawings.filter(d => d.getFlag("Scope", "type") === "focusLabel");
   let fd = drawings.filter(d => d.getFlag("Scope", "type") === "focus");
+  let legLabel = drawings.filter(d => d.getFlag("Scope", "type") === "legacyLabel");
+  let leg = drawings.filter(d => d.getFlag("Scope", "type") === "legacy");
   let bp;
   let focus;
   if ( bpd.length > 0 ) {
-    bp = bpd[0];
+    bp = bpd;
   } else {
-    bp = bp = await _createText(scene, "bigPicture");
+    bp = await _createText(scene, "bigPicture");
   }
   if ( fld.length === 0 ) {
     await _createText(scene, "focusLabel");
   }
+  if ( legLabel.length === 0 ) {
+    await _createText(scene, "legacyLabel");
+  }
   if ( fd.length > 0 ) {
-    focus = fd[0];
+    focus = fd;
   } else {
     focus = await _createText(scene, "focus");
   }
 
-  game.scope.focus = {
-    id: focus.data._id,
-    text: focus.data.text,
-    bpId: bp.data._id,
-    bpText: bp.data.text
+  let legList = [];
+  if ( leg.length > 0 ) {
+    for (const legacy of leg) {
+      legList.push({id: legacy.data._id, text: legacy.data.text});
+    }
+  } else {
+    for (let i = 0; i < SCOPE.legacies.length; i++) {
+      let legText = await _createText(scene, "legacy", SCOPE.legacies[i], i);
+      legList.push({id: legText[0].data._id, text: legText[0].data.text});
+    }
   }
+
+  game.scope.focus = {
+    id: focus[0].data._id,
+    text: focus[0].data.text,
+    bpId: bp[0].data._id,
+    bpText: bp[0].data.text
+  }
+  game.scope.legacies = legList;
 }
 
 /**
  * Create the requested drawing if it doesn't already exist
- * @param scene
- * @param type  The request drawing type (focus, focusLabel, etc)
+ * @param {Scene}   scene
+ * @param {string}  type  The request drawing type (focus, focusLabel, etc)
+ * @param {string}  text  Optional. Provide the text to create for Legacies
+ * @param {Number}  sequence  Optional. The order in which this appears in a list
  * @returns {Promise<*[]>}
  * @private
  */
-async function _createText(scene, type) {
-  let drawings = _getText(scene, type);
+async function _createText(scene, type, text = "", sequence = 0) {
+  //let drawings = _getText(scene, type);
   let x = (scene.data.width / 2) - (SCOPE[type].width / 2);
-  if ( isEmpty(drawings) ) {
-    let color = "";
-    switch (type) {
-      case "focus":
-        color = getFromTheme("focus-color");
-        break;
-      case "focusLabel":
-        color = getFromTheme("focus-label-color");
-        break;
-      case "bigPicture":
-        color = getFromTheme("focus-label-color");
-        break;
-    }
-    let drawingData = {
-      textColor: color,
-      x: x,
-      flags: {
-        Scope: {
-          type: type,
-          ftype: CONST.DRAWING_TYPES.TEXT
-        }
-      }
-    };
-
-    foundry.utils.mergeObject(drawingData, SCOPE[type]);
-    let ss = await scene.createEmbeddedDocuments("Drawing", [drawingData]);
-    drawings = _getText(scene, type);
+  //if ( isEmpty(drawings) ) {
+  let color = "";
+  let yOverride = 0;
+  switch (type) {
+    case "focus":
+      color = getFromTheme("focus-color");
+      break;
+    case "focusLabel":
+      color = getFromTheme("focus-label-color");
+      break;
+    case "bigPicture":
+      color = getFromTheme("focus-label-color");
+      break;
+    case "legacyLabel":
+      color = getFromTheme("legacy-label-color");
+      x = x / 1.5;
+      break;
+    case "legacy":
+      color = getFromTheme("legacy-color");
+      x = x / 1.5;
+      yOverride = SCOPE.legacyListStart;
   }
+  let drawingData = {
+    textColor: color,
+    x: x,
+    flags: {
+      Scope: {
+        type: type,
+        ftype: CONST.DRAWING_TYPES.TEXT
+      }
+    }
+  };
 
-  return drawings;
+  if ( text ) foundry.utils.mergeObject(drawingData, {text: text});
+  foundry.utils.mergeObject(drawingData, SCOPE[type]);
+  if (yOverride > 0) foundry.utils.mergeObject(drawingData, {y: yOverride + (sequence * SCOPE[type].height)});
+
+  let ss = await scene.createEmbeddedDocuments("Drawing", [drawingData]);
+  //let drawings = _getText(scene, type);
+  //}
+
+  return ss;
 }
 
 /**
@@ -154,12 +187,12 @@ function _getText(scene, type) {
 
   let drawings = scene.getEmbeddedCollection("Drawing");
   if ( drawings.size > 0 ) {
-    let scopeText = drawings.filter(d => d.getFlag("Scope", "ftype") === "t")
-    if ( scopeText.length > 0 ) {
-      const fd = scopeText.find(f => f.getFlag("Scope", "type") === type);
-      if ( fd )
-        return fd;
-    }
+    //let scopeText = drawings.filter(d => d.getFlag("Scope", "ftype") === "t")
+    //if ( scopeText.length > 0 ) {
+    const fd = drawings.find(f => f.getFlag("Scope", "type") === type);
+    if ( fd )
+      return fd;
+    //}
   }
   return {};
 }
