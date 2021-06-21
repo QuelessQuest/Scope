@@ -29,7 +29,7 @@ export class JournalDirectoryScope extends JournalDirectory {
 
   /**
    * Get the options for the display of the dialog
-   * @param type {string}
+   * @param {string}  type
    * @param button
    * @returns {{name: String, options: {top: number, left: number, width: number}, folderId: string}}
    * @private
@@ -39,10 +39,20 @@ export class JournalDirectoryScope extends JournalDirectory {
     const nameFromType = type[0].toUpperCase() + type.substr(1);
 
     let folderId = "";
-    if ( type !== "picture" && type !== "palette" && type !== "focus") {
+    if ( type !== "picture" && type !== "palette" && type !== "focus" && type !== "legacy" ) {
       const folder = game.folders.filter(f => f.data.type === "JournalEntry").find(f => f.getFlag("Scope", "type") === type);
       folderId = folder.id;
     }
+
+    let data = {
+      name: game.i18n.localize(`SCOPE.Create${nameFromType}`),
+      folderId: folderId,
+      options: {
+        width: 320,
+        left: window.innerWidth - 630,
+        top: button.offsetTop
+      }
+    };
 
     return {
       name: game.i18n.localize(`SCOPE.Create${nameFromType}`),
@@ -84,6 +94,7 @@ export class JournalDirectoryScope extends JournalDirectory {
     let attachSubCard = "";
     let text = "";
     let id = "";
+    let legacyData = {};
 
     switch (type) {
       case "period":
@@ -105,6 +116,14 @@ export class JournalDirectoryScope extends JournalDirectory {
         typeName = game.i18n.localize("SCOPE.UpdateFocus");
         text = game.scope.focus.text;
         id = game.scope.focus.id;
+        break;
+      case "legacy" :
+        typeName = game.i18n.localize("SCOPE.UpdateFocus");
+        let data = {};
+        for (const leg of game.scope.legacies) {
+          data[leg.id] = leg.text;
+        }
+        legacyData = data;
     }
 
     return {
@@ -121,7 +140,8 @@ export class JournalDirectoryScope extends JournalDirectory {
       chosen: "light",
       text: text,
       id: id,
-      folderId: data.folderId
+      folderId: data.folderId,
+      legacyData: legacyData
     };
   }
 
@@ -250,6 +270,7 @@ export class JournalDirectoryScope extends JournalDirectory {
       const form = html[0].querySelector("form");
       const fd = new FormDataExtended(form);
       let fo = fd.toObject();
+      this._createJournalEntry("Palette", fo.tone, fo.folderId, fo, "palette")
     });
   }
 
@@ -269,7 +290,14 @@ export class JournalDirectoryScope extends JournalDirectory {
       const form = html[0].querySelector("form");
       const fd = new FormDataExtended(form);
       let fo = fd.toObject();
-      await scene.updateEmbeddedDocuments("Drawing", [{_id: fo.id, text: fo.text}]);
+      let id;
+      if ( type === "legacy" )
+        id = fo.changeLegacy;
+      else
+        id = fo.id;
+
+      await scene.updateEmbeddedDocuments("Drawing", [{_id: id, text: fo.text}]);
+
     });
   }
 
@@ -278,12 +306,12 @@ export class JournalDirectoryScope extends JournalDirectory {
     event.stopPropagation();
 
     this._onCreate(event, type, html => {
-        const form = html[0].querySelector("form");
-        const fd = new FormDataExtended(form);
-        let fo = fd.toObject();
-        this._createJournalEntry(fo.name, fo.tone, fo.folderId, fo, type).then( e => {
-          this._maybeCreateNote(e.getFlag("Scope", "periodAttach"), e.getFlag("Scope", "eventAttach"), type, e.id);
-        });
+      const form = html[0].querySelector("form");
+      const fd = new FormDataExtended(form);
+      let fo = fd.toObject();
+      this._createJournalEntry(fo.name, fo.tone, fo.folderId, fo, type).then(e => {
+        this._maybeCreateNote(e.getFlag("Scope", "periodAttach"), e.getFlag("Scope", "eventAttach"), type, e.id);
+      });
     });
   }
 

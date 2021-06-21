@@ -3,7 +3,6 @@ import {JournalDirectoryScope} from './module/sidebar/journal.js';
 import {JournalSheetScope} from "./module/journal/journal-sheet.js";
 import {CardList} from "./module/cards.js";
 import {registerSettings} from "./module/helper.js";
-import {isEmpty} from "./module/helper.js";
 import {getFromTheme} from "./module/helper.js";
 import {insertNote} from "./module/helper.js";
 import {patchCore} from "./module/patch.js";
@@ -267,7 +266,12 @@ Hooks.on("canvasReady", async () => {
   // Remove any existing connectors from the scene
   let drawings = scene.getEmbeddedCollection("Drawing");
   let drawingsToClear = drawings.filter(d => d.getFlag("Scope", "type") === "connector").map(d => d.data._id);
-  if ( drawingsToClear.length > 0 ) scene.deleteEmbeddedDocuments("Drawing", drawingsToClear);
+  if ( drawingsToClear.length > 0 )
+    try {
+      await scene.deleteEmbeddedDocuments("Drawing", drawingsToClear);
+    } catch (ex) {
+      console.log("Attempted to delete a non-existent drawing. Just carry on.");
+    }
 
   let notes = scene.getEmbeddedCollection("Note");
 
@@ -424,7 +428,6 @@ async function _deleteNote(noteId) {
   console.log("Deleting Note with id: " + noteId);
   let scene = game.scenes.getName("Scope");
   await game.scope.period.remove(noteId);
-  //await scene.deleteEmbeddedDocuments("Note", [{_id: noteId}]);
 }
 
 /**

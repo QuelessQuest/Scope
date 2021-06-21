@@ -1,19 +1,34 @@
-<form class="{{cssClass}}" autocomplete="off">
-    <input name="name" type="text" value="{{entity.name}}" placeholder="Entry Title"/>
-
-    <select name="folder">
-        {{#select entity.folder}}
-        <option value=""></option>
-        {{#each folders}}
-        <option value="{{this.id}}">{{this.name}}</option>
-        {{/each}}
-        {{/select}}
-    </select>
-
-    <p>PALETTE</p>
-    {{editor content=entity.content target="content" button=true editable=editable owner=owner}}
-
-    {{#if editable}}
-    <button type="submit" name="submit"><i class="fas fa-feather-alt"></i> Save Entry</button>
-    {{/if}}
-</form>
+<div class="scope">
+    <table style="width:99.0017%;height:112px" border="1">
+        <tbody>
+        <tr style="height:16px">
+            <td style="width:46.1023%;height:16px">One</td>
+            <td style="width:53.0573%;height:16px">Two</td>
+        </tr>
+        <tr style="height:16px">
+            <td style="width:46.1023%;height:16px">The</td>
+            <td style="width:53.0573%;height:16px">Four</td>
+        </tr>
+        <tr style="height:16px">
+            <td style="width:46.1023%;height:16px"> </td>
+            <td style="width:53.0573%;height:16px"> </td>
+        </tr>
+        <tr style="height:16px">
+            <td style="width:46.1023%;height:16px"> </td>
+            <td style="width:53.0573%;height:16px"> </td>
+        </tr>
+        <tr style="height:16px">
+            <td style="width:46.1023%;height:16px"> </td>
+            <td style="width:53.0573%;height:16px"> </td>
+        </tr>
+        <tr style="height:16px">
+            <td style="width:46.1023%;height:16px"> </td>
+            <td style="width:53.0573%;height:16px"> </td>
+        </tr>
+        <tr style="height:16px">
+            <td style="width:46.1023%;height:16px"> </td>
+            <td style="width:53.0573%;height:16px"> </td>
+        </tr>
+        </tbody>
+    </table>
+</div>

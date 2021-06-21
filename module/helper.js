@@ -104,7 +104,11 @@ export async function arrange() {
 
   await scene.updateEmbeddedDocuments("Note", updateList);
   game.scope.period.unlockRefresh();
-  await scene.deleteEmbeddedDocuments("Note", drawingIds);
+  try {
+    await scene.deleteEmbeddedDocuments("Drawing", drawingIds);
+  } catch (ex) {
+    console.log("Attempted to delete a non-existent drawing. Just carry on.");
+  }
   //await canvas.drawings.deleteMany(drawingIds);
 }
 

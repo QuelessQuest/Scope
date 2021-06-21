@@ -92,7 +92,7 @@ SCOPE.connectors = {
     fillAlpha: 1
 }
 
-SCOPE.legacies = ["one", "two", "three", "four", "five"];
+SCOPE.legacies = ["Not Yet Defined", "Not Yet Defined", "Not Yet Defined", "Not Yet Defined", "Not Yet Defined"];
 
 SCOPE.namespace = {
   focus: {
@@ -250,7 +250,7 @@ SCOPE.themeDefaults = {
   "--scope-period-label-size": 24,
   "--scope-period-icon-color": "#7E676A",
   "--scope-period-link-color": "#6E5D5C",
-  "--scope-event-label-color": "#989797",
+  "--scope-event-label-color": "#EDEDED",
   "--scope-event-label-stroke-color": "#292929",
   "--scope-event-label-size": 24,
   "--scope-event-icon-color": "#989797",

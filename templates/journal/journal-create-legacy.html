@@ -1,8 +1,15 @@
 <form id="journal-scope-create-legacy" autocomplete="off">
     <div class="form-group">
-        <label>{{localize "SCOPE.NewFocus"}}</label>
-        <input type="text" name="text" placeholder="{{text}}"/>
-        <input type="text" name="id" value="{{id}}" hidden/>
+        <div class="flexcol">
+            <label>{{localize "SCOPE.LegacyChoice"}}</label>
+        </div>
+        <select class="scope select legacy" name="changeLegacy">
+            {{selectOptions legacyData localize=false}}
+        </select>
+    </div>
+    <div class="form-group">
+        <label>{{localize "SCOPE.UpdateLegacy"}}</label>
+        <input type="text" name="text" placeholder=""/>
     </div>
     <div class="last"></div>
 </form>
