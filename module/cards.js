@@ -124,8 +124,13 @@ export class CardList {
         removeDrawings.push(this.parent.connectors.next[this.sortDirection]);
         if ( this.head ) {
           let cid = await this._createConnection(scene, this.parent, this.head);
-          this.head.connectors.prev[this.sortDirection] = cid;
-          this.parent.connectors.next[this.sortDirection] = cid;
+          if (this.sortDirection === SCOPE.sortDirection.horizontal) {
+            this.head.connectors.prev = {x: cid, y: ""};
+            this.parent.connectors.next = {x: cid, y: ""};
+          } else {
+            this.head.connectors.prev = {x: "", y: cid};
+            this.parent.connectors.next = {x: "", y: cid};
+          }
         }
       }
       try {
@@ -153,8 +158,13 @@ export class CardList {
     if ( card.prev ) {
       let did = await this._createConnection(scene, card.prev, card.next);
       if ( card.prev.next ) {
-        card.prev.connectors.next[this.sortDirection] = did;
-        card.prev.next.connectors.prev[this.sortDirection] = did;
+        if (this.sortDirection === SCOPE.sortDirection.horizontal) {
+          card.prev.next.connectors.prev = {x: did, y: ""};
+          card.prev.connectors.next = {x: did, y: ""};
+        } else {
+          card.prev.next.connectors.prev = {x: "", y: did};
+          card.prev.connectors.next = {x: "", y: did};
+        }
       }
     }
     this.size--;
@@ -238,34 +248,61 @@ export class CardList {
     if ( this.parent && this.head.id === card.id ) drawingIds.push(card.connectors.prev[this.sortDirection]);
 
     let scene = game.scenes.getName("Scope");
-    await scene.deleteEmbeddedDocuments("Drawing", drawingIds);
+    try {
+      await scene.deleteEmbeddedDocuments("Drawing", drawingIds);
+    } catch (ex) {
+      console.log("Attempted to delete a non-existent drawing. Just carry on.");
+    }
 
     // Re-establish next connector
     if ( card.next ) {
       const cid = await this._createConnection(scene, card, card.next);
-      card.connectors.next[this.sortDirection] = cid;
-      card.next.connectors.prev[this.sortDirection] = cid;
+      if (this.sortDirection === SCOPE.sortDirection.horizontal) {
+        card.next.connectors.prev = {x: cid, y: ""};
+        card.connectors.next = {x: cid, y: ""};
+      } else {
+        card.next.connectors.prev = {x: "", y: cid};
+        card.connectors.next = {x: "", y: cid};
+      }
     }
 
     // Re-establish prev connector
     if ( card.prev ) {
       const cid = await this._createConnection(scene, card.prev, card);
-      card.connectors.prev[this.sortDirection] = cid;
-      card.prev.connectors.next[this.sortDirection] = cid;
+      if (this.sortDirection === SCOPE.sortDirection.horizontal) {
+        card.connectors.prev = {x: cid, y: ""};
+        card.prev.connectors.next = {x: cid, y: ""};
+      } else {
+        card.connectors.prev = {x: "", y: cid};
+        card.prev.connectors.next = {x: "", y: cid};
+      }
     }
 
     // Re-establish parent -> child list connector
     if ( card.children.head !== null ) {
       const cid = await card.children._createConnection(scene, card, card.children.head);
-      card.connectors.next[SCOPE.sortDirection.opposite[this.sortDirection]] = cid;
-      card.children.head.connectors.prev[card.children.sortDirection] = cid;
+      if (this.sortDirection === SCOPE.sortDirection.horizontal) {
+        card.connectors.next = {x: "", y: cid};
+      } else {
+        card.connectors.next = {x: cid, y: ""};
+      }
+      if (card.children.sortDirection === SCOPE.sortDirection.horizontal) {
+        card.children.head.connectors.prev = {x: cid, y: ""};
+      } else {
+        card.children.head.connectors.prev = {x: "", y: cid};
+      }
     }
 
     // Re-establish child list head -> parent connector
     if ( this.parent && this.head.id === card.id ) {
       const cid = await this._createConnection(scene, this.parent, card);
-      card.connectors.prev[this.sortDirection] = cid;
-      this.parent.connectors.next[this.sortDirection] = cid;
+      if (this.sortDirection === SCOPE.sortDirection.horizontal) {
+        card.connectors.prev = {x: cid, y: ""};
+        this.parent.connectors.next = {x: cid, y: ""};
+      } else {
+        card.connectors.prev = {x: "", y: cid};
+        this.parent.connectors.next = {x: "", y: cid};
+      }
     }
 
     return true;
@@ -406,7 +443,13 @@ export class CardList {
     }
     currentList.push(canvas.notes.get(ptr.noteId));
 
-    await canvas.drawings.deleteMany(drawingIds);
+    let scene = game.scenes.getName("Scope");
+    try {
+      await scene.deleteEmbeddedDocuments("Drawing", removeDrawings);
+    } catch (ex) {
+      console.log("Attempted to delete a non-existent drawing. Just carry on.");
+    }
+
     this.head = null;
     this.size = 0;
 
@@ -513,15 +556,7 @@ export class CardList {
    * @private
    */
   async _createConnection(scene, card1, card2) {
-    let blankConnector = {x: "", y: ""};
-    if ( card1 ) {
-      card1.connectors.next = blankConnector;
-      card1.connectors.prev = blankConnector;
-    }
-    if ( card2 ) {
-      card2.connectors.next = blankConnector;
-      card2.connectors.prev = blankConnector;
-    }
+
     if ( !card1 || !card2 ) return;
     let options = {};
     options = Object.assign(options, SCOPE.connectors);

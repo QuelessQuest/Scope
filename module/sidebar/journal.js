@@ -164,7 +164,7 @@ export class JournalDirectoryScope extends JournalDirectory {
 
     renderTemplate(
         `systems/scope/templates/journal/journal-create-bookends.html`,
-        this._getDialogData("period"))
+        this._getDialogData("period", data))
         .then(content => {
           new DialogScope({
             title: game.i18n.localize("SCOPE.CreateBookends"),

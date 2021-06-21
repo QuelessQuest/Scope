@@ -14,14 +14,16 @@ export async function insertNote(id, {x, y}) {
     entryId: id,
     x: x,
     y: y,
-    icon: CONST.DEFAULT_NOT_ICON,
+    icon: CONST.DEFAULT_NOTE_ICON,
     textAnchor: CONST.TEXT_ANCHOR_POINTS.CENTER
   });
 
   if ( !canvas.grid.hitArea.contains(x, y) ) return false;
 
   canvas.notes.activate();
-  Note.create(noteData);
+  let scene = game.scenes.getName("Scope");
+  let note = scene.createEmbeddedDocuments("Note", [noteData]);
+  //Note.create(noteData);
   //let note = new Note(noteData);
   //await note.constructor.create(noteData);
 }

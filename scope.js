@@ -30,7 +30,7 @@ Hooks.once("init", function () {
   game.scope.bookend = game.settings.get('Scope', 'bookend') || SCOPE.Bookends.position;
 });
 
-Hooks.once("ready", async function() {
+Hooks.once("ready", async function () {
   await _prepareScene();
   await _prepareFolders();
   game.journal.directory.activate();
@@ -155,8 +155,8 @@ function _getText(scene, type) {
   let drawings = scene.getEmbeddedCollection("Drawing");
   if ( drawings.size > 0 ) {
     let scopeText = drawings.filter(d => d.getFlag("Scope", "ftype") === "t")
-    if (scopeText.length > 0) {
-      const fd = scopeText.find(f => f.getFlag("Scope","type") === type);
+    if ( scopeText.length > 0 ) {
+      const fd = scopeText.find(f => f.getFlag("Scope", "type") === type);
       if ( fd )
         return fd;
     }
@@ -207,11 +207,11 @@ async function _createFolder(folders, folder, type) {
   });
 
   let f;
-  if ( !folders.find(f => f.data.flags) )
-    if ( !folders.find(f => f.getFlag("Scope", "type") === type) ) {
-      console.log(`Creating ${name} ${folder}`);
-      f = await Folder.create(folderData);
-    }
+  //if ( !folders.find(f => f.data.flags) )
+  if ( !folders.find(f => f.getFlag("Scope", "type") === type) ) {
+    console.log(`Creating ${name} ${folder}`);
+    f = await Folder.create(folderData);
+  }
 
   console.log(f);
 }
@@ -234,7 +234,7 @@ Hooks.on("canvasReady", async () => {
   // Remove any existing connectors from the scene
   let drawings = scene.getEmbeddedCollection("Drawing");
   let drawingsToClear = drawings.filter(d => d.getFlag("Scope", "type") === "connector").map(d => d.data._id);
-  if (drawingsToClear.length > 0) scene.deleteEmbeddedDocuments("Drawing", drawingsToClear);
+  if ( drawingsToClear.length > 0 ) scene.deleteEmbeddedDocuments("Drawing", drawingsToClear);
 
   let notes = scene.getEmbeddedCollection("Note");
 
@@ -245,7 +245,7 @@ Hooks.on("canvasReady", async () => {
   }
 
   // Rebuild the events, adding back connectors
-  let eventNotes = notes.filter(n => n.getFlag("Scope", "type" ) === "event");
+  let eventNotes = notes.filter(n => n.getFlag("Scope", "type") === "event");
   let eventGroups = eventNotes.reduce((r, a) => {
     const periodNote = a.getFlag("Scope", "periodNote");
     r[periodNote] = [...r[periodNote] || [], a];
