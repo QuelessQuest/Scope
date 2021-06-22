@@ -33,8 +33,8 @@ export class CardList {
 
   /**
    * Add an element to the list, based on the items screen location
-   * @param note {Note}
-   * @param clearDrawing {Boolean} default true
+   * @param {NoteDocument}  note
+   * @param {boolean}       clearDrawing default true
    * @returns {CardScope}
    */
   async add(note, clearDrawing = true) {
@@ -56,8 +56,10 @@ export class CardList {
         // Establish next next/prev on new card before creating connections. This allows the cards to
         // be shifted, if necessary, and only draw the connections once.
         card.prev = targetCard;
+        card.order = targetCard.order + 1;
         if ( targetCard.next ) {
           card.next = targetCard.next;
+          this.incrementOrderFrom(card.next);
         }
 
         if ( shiftIt !== null && !isEmpty(shiftIt) ) await this._shiftFrom(shiftIt);
@@ -194,6 +196,15 @@ export class CardList {
       ptr = ptr.next;
     }
     return ptr;
+  }
+
+  /**
+   *
+   * @param {CardScope} card
+   */
+  incrementOrderFrom(card) {
+      card.order = card.order + 1;
+      if (card.next) this.incrementOrderFrom(card.next);
   }
 
   /**

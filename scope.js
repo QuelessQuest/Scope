@@ -130,9 +130,8 @@ async function _prepareSceneText(scene) {
  * @private
  */
 async function _createText(scene, type, text = "", sequence = 0) {
-  //let drawings = _getText(scene, type);
+
   let x = (scene.data.width / 2) - (SCOPE[type].width / 2);
-  //if ( isEmpty(drawings) ) {
   let color = "";
   let yOverride = 0;
   switch (type) {
@@ -169,31 +168,7 @@ async function _createText(scene, type, text = "", sequence = 0) {
   foundry.utils.mergeObject(drawingData, SCOPE[type]);
   if (yOverride > 0) foundry.utils.mergeObject(drawingData, {y: yOverride + (sequence * SCOPE[type].height)});
 
-  let ss = await scene.createEmbeddedDocuments("Drawing", [drawingData]);
-  //let drawings = _getText(scene, type);
-  //}
-
-  return ss;
-}
-
-/**
- * Get any drawings that are of type TEXT and contain the flag with the given flag key
- * @package type  The type of the drawing (focus, focusLabel, etc)
- * @returns {DrawingDocument}
- * @private
- */
-function _getText(scene, type) {
-
-  let drawings = scene.getEmbeddedCollection("Drawing");
-  if ( drawings.size > 0 ) {
-    //let scopeText = drawings.filter(d => d.getFlag("Scope", "ftype") === "t")
-    //if ( scopeText.length > 0 ) {
-    const fd = drawings.find(f => f.getFlag("Scope", "type") === type);
-    if ( fd )
-      return fd;
-    //}
-  }
-  return {};
+  return  await scene.createEmbeddedDocuments("Drawing", [drawingData]);
 }
 
 /**
@@ -206,9 +181,7 @@ function _getText(scene, type) {
  * @private
  */
 async function _prepareFolders() {
-  console.log("FOLDERS");
   const folder = game.i18n.localize("SCOPE.JournalFolder");
-  console.log(game.folders);
   let journalFolders = game.folders.filter(f => f.type === "JournalEntry");
   await _createFolder(journalFolders, folder, "period");
   await _createFolder(journalFolders, folder, "event");
@@ -218,9 +191,9 @@ async function _prepareFolders() {
 
 /**
  * Create the requested folder, if it does not exist
- * @param folders   The list of JournalEntry folders
- * @param folder    The localized word for Folder
- * @param type      The type of folder to create
+ * @param {Array<JournalEntry>} folders   The list of JournalEntry folders
+ * @param {string}              folder    The localized word for Folder
+ * @param {string}              type      The type of folder to create
  * @returns {Promise<void>}
  * @private
  */
@@ -238,14 +211,10 @@ async function _createFolder(folders, folder, type) {
     }
   });
 
-  let f;
-  //if ( !folders.find(f => f.data.flags) )
   if ( !folders.find(f => f.getFlag("Scope", "type") === type) ) {
     console.log(`Creating ${name} ${folder}`);
-    f = await Folder.create(folderData);
+    await Folder.create(folderData);
   }
-
-  console.log(f);
 }
 
 /**
@@ -421,7 +390,7 @@ Hooks.on("deleteNote", async (noteDocument, options, userId) => {
 
 /**
  *
- * @param noteId {String}
+ * @param {string}  noteId
  * @private
  */
 async function _deleteNote(noteId) {
@@ -433,7 +402,6 @@ async function _deleteNote(noteId) {
 /**
  * JOURNAL HANDLING ===========================================================
  */
-
 
 /**
  * If a JournalEntry is removed, so is the associated note and any connectors

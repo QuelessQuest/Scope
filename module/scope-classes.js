@@ -30,7 +30,7 @@ export class CardScope {
     this._children = null;  // This note may have an additional list attached
     this.connectors.prev = {x: "", y: ""};
     this.connectors.next = {x: "", y: ""};
-
+    this._order = 0;
   }
 
   get id() {
@@ -43,6 +43,14 @@ export class CardScope {
 
   set children(childList) {
     this._children = childList;
+  }
+
+  get order() {
+    return this._order;
+  }
+
+  set order(newOrder) {
+    this._order = newOrder;
   }
 }
 

@@ -67,7 +67,8 @@ export class JournalDirectoryScope extends JournalDirectory {
 
   /**
    * Get the data needed to populate the creation dialog
-   * @param type {string}
+   * @param {string}  type
+   * @param {{}}      data
    * @returns {{
    *          name: {string},
    *          periodCards: {},
@@ -81,7 +82,9 @@ export class JournalDirectoryScope extends JournalDirectory {
    *          tones: {light: {string}, dark: {string}},
    *          chosen: {string},
    *          text: {string},
-   *          id: {string}}}
+   *          id: {string},
+   *          folderId: {string},
+   *          legacyData: {}}}
    * @private
    */
   _getDialogData(type, data) {
@@ -148,7 +151,7 @@ export class JournalDirectoryScope extends JournalDirectory {
   /**
    * Create the scope item
    * @param event
-   * @param type
+   * @param {string}  type
    * @param callback
    * @private
    */
@@ -277,7 +280,7 @@ export class JournalDirectoryScope extends JournalDirectory {
   /**
    * Update a text drawing
    * @param event
-   * @param type {string}
+   * @param {string}  type
    * @private
    */
   async _onCreateText(event, type) {
@@ -301,6 +304,13 @@ export class JournalDirectoryScope extends JournalDirectory {
     });
   }
 
+  /**
+   *
+   * @param event
+   * @param {string}  type
+   * @returns {Promise<void>}
+   * @private
+   */
   async _onCreateCard(event, type) {
     event.preventDefault();
     event.stopPropagation();
@@ -317,12 +327,12 @@ export class JournalDirectoryScope extends JournalDirectory {
 
   /**
    * Create the Journal Entry from the form data.
-   * @param name {string}
-   * @param tone {string}
-   * @param folderId {string}
-   * @param fo {{}}
-   * @param type {string}
-   * @returns
+   * @param {string}  name
+   * @param {string}  tone
+   * @param {string}  folderId
+   * @param {{}}      fo
+   * @param {string}  type
+   * @returns {JournalEntry}
    * @private
    */
   async _createJournalEntry(name, tone, folderId, fo, type) {
@@ -350,10 +360,10 @@ export class JournalDirectoryScope extends JournalDirectory {
    * If the creation form indicates that a note is to be created (inserted, attached,
    * etc), the note will be created from the Journal Entry. Otherwise, Notes
    * are created when Journal Entries are dragged onto the canvas.
-   * @param periodId {string}
-   * @param eventId {string}
-   * @param type {string}
-   * @param entityId {string}
+   * @param {string}  periodId
+   * @param {string}  eventId
+   * @param {string}  type
+   * @param {string}  entityId
    * @private
    */
   _maybeCreateNote(periodId, eventId, type, entityId) {

@@ -9,6 +9,13 @@ export function isEmpty(thing) {
   return Object.keys(thing).length === 0
 }
 
+/**
+ *
+ * @param {string}  id
+ * @param {number}  x
+ * @param {number}  y
+ * @returns {Promise<abstract.Document[]|boolean>}
+ */
 export async function insertNote(id, {x, y}) {
   const noteData = new foundry.data.NoteData({
     entryId: id,
@@ -22,10 +29,7 @@ export async function insertNote(id, {x, y}) {
 
   canvas.notes.activate();
   let scene = game.scenes.getName("Scope");
-  let note = scene.createEmbeddedDocuments("Note", [noteData]);
-  //Note.create(noteData);
-  //let note = new Note(noteData);
-  //await note.constructor.create(noteData);
+  return await scene.createEmbeddedDocuments("Note", [noteData]);
 }
 
 /**
