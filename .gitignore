@@ -1,0 +1,9 @@
+# IDE
+.idea/
+.vs/
+node_modules/
+abstract/
+data/
+utils/
+foundry.js
+*.mjs

@@ -71,18 +71,18 @@ SCOPE.noteSettings = {
 
 SCOPE.icons = {
   size: 38,
-  light: "systems/Scope/assets/card-light.svg",
-  dark: "systems/Scope/assets/card-dark.svg",
-  period: "systems/Scope/assets/card-period.svg",
-  event: "systems/Scope/assets/card-event.svg",
-  scene: "systems/Scope/assets/card-scene.svg"
+  light: "systems/scope/assets/card-light.svg",
+  dark: "systems/scope/assets/card-dark.svg",
+  period: "systems/scope/assets/card-period.svg",
+  event: "systems/scope/assets/card-event.svg",
+  scene: "systems/scope/assets/card-scene.svg"
 }
 
 SCOPE.connectors = {
     t: CONST.DRAWING_TYPES.FREEHAND,
     type: CONST.DRAWING_TYPES.FREEHAND,
     flags: {
-      Scope: {
+      scope: {
         type: "connector"
       }
     },
@@ -207,7 +207,7 @@ SCOPE.bigPicture = {
 }
 
 SCOPE.scene = {
-  name: "Scope",
+  name: "scope",
   journal: "",
   width: 5120,
   height: 2880,

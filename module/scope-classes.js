@@ -111,7 +111,7 @@ export class ScopeControlIcon extends PIXI.Container {
     this.iconTone.height = SCOPE.icons.size;
 
     // Draw icon
-    if ( game.settings.get("Scope", "dropShadow") ) {
+    if ( game.settings.get("scope", "dropShadow") ) {
       let dropShadow = new PIXI.filters.DropShadowFilter();
       this.icon.filters = [dropShadow];
     }

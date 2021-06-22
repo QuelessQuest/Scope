@@ -40,7 +40,7 @@ export class JournalDirectoryScope extends JournalDirectory {
 
     let folderId = "";
     if ( type !== "picture" && type !== "palette" && type !== "focus" && type !== "legacy" ) {
-      const folder = game.folders.filter(f => f.data.type === "JournalEntry").find(f => f.getFlag("Scope", "type") === type);
+      const folder = game.folders.filter(f => f.data.type === "JournalEntry").find(f => f.getFlag("scope", "type") === type);
       folderId = folder.id;
     }
 
@@ -287,7 +287,7 @@ export class JournalDirectoryScope extends JournalDirectory {
     event.preventDefault();
     event.stopPropagation();
 
-    let scene = game.scenes.getName("Scope");
+    let scene = game.scenes.getName("scope");
 
     this._onCreate(event, type, async html => {
       const form = html[0].querySelector("form");
@@ -320,7 +320,7 @@ export class JournalDirectoryScope extends JournalDirectory {
       const fd = new FormDataExtended(form);
       let fo = fd.toObject();
       this._createJournalEntry(fo.name, fo.tone, fo.folderId, fo, type).then(e => {
-        this._maybeCreateNote(e.getFlag("Scope", "periodAttach"), e.getFlag("Scope", "eventAttach"), type, e.id);
+        this._maybeCreateNote(e.getFlag("scope", "periodAttach"), e.getFlag("scope", "eventAttach"), type, e.id);
       });
     });
   }
@@ -344,7 +344,7 @@ export class JournalDirectoryScope extends JournalDirectory {
       name: name,
       folder: folderId,
       flags: {
-        Scope: {
+        scope: {
           type: type,
           tone: tone,
           periodAttach: fo.periodAttach,

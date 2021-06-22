@@ -18,12 +18,12 @@ export function patchCore() {
 
   Note.prototype._drawControlIcon = function () {
     let tint = this.data.iconTint ? foundry.utils.colorStringToHex(this.data.iconTint) : null;
-    let iconWidth = this.document.getFlag("Scope", "iconWidth") || 360;
-    let iconHeight = this.document.getFlag("Scope", "iconHeight") || 160;
-    let nbc = this.document.getFlag("Scope", "noteBorderColor");
+    let iconWidth = this.document.getFlag("scope", "iconWidth") || 360;
+    let iconHeight = this.document.getFlag("scope", "iconHeight") || 160;
+    let nbc = this.document.getFlag("scope", "noteBorderColor");
     let borderColor = foundry.utils.colorStringToHex(nbc);
     let borderColorHalf = foundry.utils.colorStringToHex(`${nbc}80`);
-    let tone = this.document.getFlag("Scope", "tone");
+    let tone = this.document.getFlag("scope", "tone");
     let icon = new ScopeControlIcon({texture: this.data.icon, iconWidth: iconWidth, iconHeight: iconHeight, borderColor: borderColor, borderColorHalf: borderColorHalf, tint: tint, tone: tone});
     icon.x -= (iconWidth / 2);
     icon.y -= (iconHeight / 2);
@@ -45,7 +45,7 @@ export function patchCore() {
     const hsv = foundry.utils.rgbToHsv(...foundry.utils.hexToRGB(color));
     style.wordWrap = true;
     style.fill = color;
-    style.stroke = foundry.utils.colorStringToHex(this.document.getFlag("Scope", "labelBorderColor"));
+    style.stroke = foundry.utils.colorStringToHex(this.document.getFlag("scope", "labelBorderColor"));
     style.stroke = hsv[2] > 0.6 ? 0x000000 : 0xFFFFFF;
     style.wordWrapWidth = this.data.iconSize;
     return style;

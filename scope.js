@@ -17,7 +17,7 @@ import {patchCore} from "./module/patch.js";
 Hooks.once("init", function () {
   console.log(`SCOPE | Initializing Scope ============================`);
 
-  CONFIG.Scope = SCOPE;
+  CONFIG.scope = SCOPE;
   CONFIG.ui.journal = JournalDirectoryScope;
   CONFIG["JournalEntry"]["sheetClass"] = JournalSheetScope;
   game.scope = SCOPE.namespace;
@@ -26,7 +26,7 @@ Hooks.once("init", function () {
   registerSettings();
   patchCore();
 
-  game.scope.bookend = game.settings.get('Scope', 'bookend') || SCOPE.Bookends.position;
+  game.scope.bookend = game.settings.get('scope', 'bookend') || SCOPE.Bookends.position;
 });
 
 Hooks.once("ready", async function () {
@@ -56,13 +56,13 @@ Hooks.on("updateScene", async (entity, data, options, userId) => {
  * @private
  */
 async function _prepareScene() {
-  let scene = game.scenes.getName("Scope");
+  let scene = game.scenes.getName("scope");
   if ( scene ) {
     SCOPE.scenePrepared = true;
     await _prepareSceneText(scene);
   } else {
     let x = await Scene.create(SCOPE.scene);
-    await Scene.updateDocuments([{_id: x._id, active: true, img: "systems/Scope/assets/themes/whitespace/background.jpg"}]);
+    await Scene.updateDocuments([{_id: x._id, active: true, img: "systems/scope/assets/themes/whitespace/background.jpg"}]);
   }
 }
 
@@ -75,11 +75,11 @@ async function _prepareScene() {
 async function _prepareSceneText(scene) {
   console.log("Preparing Scene Text");
   let drawings = scene.getEmbeddedCollection("Drawing");
-  let bpd = drawings.filter(d => d.getFlag("Scope", "type") === "bigPicture");
-  let fld = drawings.filter(d => d.getFlag("Scope", "type") === "focusLabel");
-  let fd = drawings.filter(d => d.getFlag("Scope", "type") === "focus");
-  let legLabel = drawings.filter(d => d.getFlag("Scope", "type") === "legacyLabel");
-  let leg = drawings.filter(d => d.getFlag("Scope", "type") === "legacy");
+  let bpd = drawings.filter(d => d.getFlag("scope", "type") === "bigPicture");
+  let fld = drawings.filter(d => d.getFlag("scope", "type") === "focusLabel");
+  let fd = drawings.filter(d => d.getFlag("scope", "type") === "focus");
+  let legLabel = drawings.filter(d => d.getFlag("scope", "type") === "legacyLabel");
+  let leg = drawings.filter(d => d.getFlag("scope", "type") === "legacy");
   let bp;
   let focus;
   if ( bpd.length > 0 ) {
@@ -157,7 +157,7 @@ async function _createText(scene, type, text = "", sequence = 0) {
     textColor: color,
     x: x,
     flags: {
-      Scope: {
+      scope: {
         type: type,
         ftype: CONST.DRAWING_TYPES.TEXT
       }
@@ -186,7 +186,6 @@ async function _prepareFolders() {
   await _createFolder(journalFolders, folder, "period");
   await _createFolder(journalFolders, folder, "event");
   await _createFolder(journalFolders, folder, "scene");
-  await _createFolder(journalFolders, folder, "legacy");
 }
 
 /**
@@ -205,13 +204,13 @@ async function _createFolder(folders, folder, type) {
     parent: null,
     type: "JournalEntry",
     flags: {
-      Scope: {
+      scope: {
         type: type
       }
     }
   });
 
-  if ( !folders.find(f => f.getFlag("Scope", "type") === type) ) {
+  if ( !folders.find(f => f.getFlag("scope", "type") === type) ) {
     console.log(`Creating ${name} ${folder}`);
     await Folder.create(folderData);
   }
@@ -230,11 +229,28 @@ Hooks.on("canvasReady", async () => {
   // Initialize the collision detection. Used to determine if cards overlap
   SCOPE.bump = new Bump(PIXI);
 
-  let scene = game.scenes.getName("Scope");
+  let scene = game.scenes.getName("scope");
 
   // Remove any existing connectors from the scene
   let drawings = scene.getEmbeddedCollection("Drawing");
-  let drawingsToClear = drawings.filter(d => d.getFlag("Scope", "type") === "connector").map(d => d.data._id);
+  /*
+  const map0 = new Map([
+  ['a', 1],
+  ['b', 2],
+  ['c', 3]
+]);
+
+const map1 = new Map(
+  [...map0]
+  .filter(([k, v]) => v < 3 )
+);
+
+console.info([...map1]);
+//[0: ["a", 1], 1: ["b", 2]]
+   */
+  //let drawingsToClear = drawings.filter(d => d.getFlag("Scope", "type") === "connector").map(d => d.data._id);
+  //let xxx = [...drawings].filter(([k,v] )=> v.getFlag("Scope", "type") === "connector").map(([k,v]) => v.data._id);
+  let drawingsToClear = [...drawings].filter(d => d.getFlag("scope", "type") === "connector").map(d => d.data._id);
   if ( drawingsToClear.length > 0 )
     try {
       await scene.deleteEmbeddedDocuments("Drawing", drawingsToClear);
@@ -245,15 +261,19 @@ Hooks.on("canvasReady", async () => {
   let notes = scene.getEmbeddedCollection("Note");
 
   // Rebuild the period list, adding back connectors
-  let periodNotes = notes.filter(n => n.getFlag("Scope", "type") === "period");
-  for (const period of periodNotes) {
+  let periodNotes = notes.filter(n => n.getFlag("scope", "type") === "period");
+
+  // Order of notes is not saved in the data naturally, we must recreate the periods in order so what is displayed
+  // on screen matches what is stored in game.scope.period
+  const sortedPeriods = periodNotes.sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
+  for (const period of sortedPeriods) {
     await game.scope.period.add(period);
   }
 
   // Rebuild the events, adding back connectors
-  let eventNotes = notes.filter(n => n.getFlag("Scope", "type") === "event");
+  let eventNotes = notes.filter(n => n.getFlag("scope", "type") === "event");
   let eventGroups = eventNotes.reduce((r, a) => {
-    const periodNote = a.getFlag("Scope", "periodNote");
+    const periodNote = a.getFlag("scope", "periodNote");
     r[periodNote] = [...r[periodNote] || [], a];
     return r;
   }, {});
@@ -273,7 +293,7 @@ Hooks.on("canvasReady", async () => {
  */
 Hooks.on("dropCanvasData", (canvas, data) => {
   if ( data.type !== "JournalEntry" ) return;
-  const type = game.journal.get(data.id).getFlag("Scope", "type");
+  const type = game.journal.get(data.id).getFlag("scope", "type");
   switch (type) {
     case "period":
       insertNote(data.id, {x: data.x, y: data.y});
@@ -295,6 +315,10 @@ Hooks.on("dropCanvasData", (canvas, data) => {
 Hooks.on("updateNote", async (entity, d, options, userid) => {
   const noteId = d._id;
   if ( !game.scope.period.canRefresh ) return;
+  if (isNaN(d.x) || isNaN(d.y)) {
+    console.log("Got a NaN");
+    return;
+  }
   await game.scope.period.updateCard(noteId, {x: d.x, y: d.y});
 });
 
@@ -318,14 +342,36 @@ Hooks.on("createNote", async (noteDocument, options) => {
   });
 
   const entry = game.journal.get(noteDocument.data.entryId);
-  const tone = entry.getFlag("Scope", "tone");
-  const type = entry.getFlag("Scope", "type");
-  const periodAttach = entry.getFlag("Scope", "periodAttach");
-  const eventAttach = entry.getFlag("Scope", "eventAttach");
+  const tone = entry.getFlag("scope", "tone");
+  const type = entry.getFlag("scope", "type");
+  const periodAttach = entry.getFlag("scope", "periodAttach");
+  const eventAttach = entry.getFlag("scope", "eventAttach");
   let periodNoteId = "none";
   let eventNoteId = "none";
   if ( periodAttach && periodAttach !== "none" ) {
     periodNoteId = game.scope.period.findCard("id", periodAttach).noteId;
+  }
+
+  let card;
+  switch (type) {
+    case "period":
+      card = await game.scope.period.add(noteDocument);
+      break;
+    case "event":
+      // TODO - Need to calculate the notes x/y if not dropped, but attached
+      if ( periodAttach !== "none" ) {
+        if ( eventAttach === "none" )
+          card = await game.scope.period.attach(type, noteDocument, periodAttach);
+        else {
+          const periodCard = game.scope.period.findCard("id", periodAttach, game.scope.period.head);
+          card = periodCard.children.add(noteDocument);
+        }
+      }
+      break;
+    case "scene":
+      break;
+    case "legacy":
+      break;
   }
 
   let flagData = SCOPE.noteSettings[type];
@@ -334,11 +380,12 @@ Hooks.on("createNote", async (noteDocument, options) => {
     labelBorderColor: getFromTheme(`${type}-label-stroke-color`),
     noteBorderColor: getFromTheme("border-color"),
     periodNote: periodNoteId,
-    eventNote: eventNoteId
+    eventNote: eventNoteId,
+    order: card.order
   }
   flagData = foundry.utils.mergeObject(flagData, flagTypeData);
   const flags = {
-    Scope: flagData
+    scope: flagData
   }
 
   let typeData = {
@@ -353,30 +400,10 @@ Hooks.on("createNote", async (noteDocument, options) => {
   }
 
   game.scope.period.lockRefresh();
-  let scene = game.scenes.getName("Scope");
+  let scene = game.scenes.getName("scope");
   await scene.updateEmbeddedDocuments("Note", [typeData]);
   game.scope.period.unlockRefresh();
 
-  switch (type) {
-    case "period":
-      await game.scope.period.add(noteDocument);
-      break;
-    case "event":
-      // TODO - Need to calculate the notes x/y if not dropped, but attached
-      if ( periodAttach !== "none" ) {
-        if ( eventAttach === "none" )
-          await game.scope.period.attach(type, noteDocument, periodAttach);
-        else {
-          const periodCard = game.scope.period.findCard("id", periodAttach, game.scope.period.head);
-          periodCard.children.add(noteDocument);
-        }
-      }
-      break;
-    case "scene":
-      break;
-    case "legacy":
-      break;
-  }
 });
 
 
@@ -395,7 +422,7 @@ Hooks.on("deleteNote", async (noteDocument, options, userId) => {
  */
 async function _deleteNote(noteId) {
   console.log("Deleting Note with id: " + noteId);
-  let scene = game.scenes.getName("Scope");
+  let scene = game.scenes.getName("scope");
   await game.scope.period.remove(noteId);
 }
 

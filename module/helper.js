@@ -28,7 +28,7 @@ export async function insertNote(id, {x, y}) {
   if ( !canvas.grid.hitArea.contains(x, y) ) return false;
 
   canvas.notes.activate();
-  let scene = game.scenes.getName("Scope");
+  let scene = game.scenes.getName("scope");
   return await scene.createEmbeddedDocuments("Note", [noteData]);
 }
 
@@ -48,13 +48,13 @@ export function getBookendPositions() {
 export function getListPosition(size) {
   let mid = game.scenes.active.data.width / 2;
   let length;
-  const spacing = SCOPE.noteSettings.period.iconWidth + game.settings.get("Scope", "spacing");
+  const spacing = SCOPE.noteSettings.period.iconWidth + game.settings.get("scope", "spacing");
   if ( size > 1 ) {
     length = spacing * size;
   } else {
     length = SCOPE.noteSettings.period.iconWidth;
   }
-  return {x: mid - (length / 2) + (spacing/2), y: game.settings.get("Scope", "fromTop")}
+  return {x: mid - (length / 2) + (spacing/2), y: game.settings.get("scope", "fromTop")}
 }
 
 /**
@@ -66,18 +66,15 @@ export async function arrange() {
 
   game.scope.period.lockRefresh();
 
-  let scene = game.scenes.getName("Scope");
-  let notes = scene.getEmbeddedCollection("Note");
+  let scene = game.scenes.getName("scope");
 
   const head = game.scope.period.head;
-  const bookend = game.settings.get("Scope", "arrange") === "bookend"
+  const bookend = game.settings.get("scope", "arrange") === "bookend"
   if ( bookend ) {
     const positions = getBookendPositions();
     const last = game.scope.period.getLast();
     let toUpdate = [{_id: head.noteId, x: positions.start.x, y: positions.start.y}, {_id: last.noteId, x: positions.end.x, y: positions.end.y}]
     await scene.updateEmbeddedDocuments("Note", toUpdate);
-    //await canvas.notes.get(head.noteId).update(positions.start);
-    //await canvas.notes.get(last.noteId).update(positions.end);
     head.x = positions.start.x;
     head.y = positions.start.y;
     last.x = positions.end.x;
@@ -85,7 +82,6 @@ export async function arrange() {
   } else {
     const position = getListPosition(game.scope.period.size);
     await scene.updateEmbeddedDocuments("Note", [{_id: head.noteId, x: position.x, y: position.y}]);
-    //await canvas.notes.get(head.noteId).update(position);
     head.x = position.x;
     head.y = position.y;
   }
@@ -96,9 +92,8 @@ export async function arrange() {
   let updateList = [];
   for (let idx = 0; idx < events.length; idx++) {
     const x = events[idx].parent.x;
-    const y = events[idx].parent.y + SCOPE.noteSettings.event.spacing.y + game.settings.get("Scope", "spacing");
+    const y = events[idx].parent.y + SCOPE.noteSettings.event.spacing.y + game.settings.get("scope", "spacing");
     updateList = [ ...updateList, ...{_id: events[idx].head.noteId, x: x, y: y}];
-    //await canvas.notes.get(events[idx].head.noteId).update({x: x, y: y});
     events[idx].head.x = x;
     events[idx].head.y = y;
     const eventResults = await events[idx].arrangeList(false);
@@ -113,15 +108,14 @@ export async function arrange() {
   } catch (ex) {
     console.log("Attempted to delete a non-existent drawing. Just carry on.");
   }
-  //await canvas.drawings.deleteMany(drawingIds);
 }
 
 export function getFromTheme(item) {
-  return CONFIG.Scope.themeDefaults[`--scope-${item}`];
+  return CONFIG.scope.themeDefaults[`--scope-${item}`];
 }
 
 export function registerSettings() {
-  game.settings.register("Scope", "dropShadow", {
+  game.settings.register("scope", "dropShadow", {
     name: "SCOPE.SETTINGS.DropShadow",
     hint: "SCOPE.SETTINGS.DropShadowHint",
     scope: "client",
@@ -133,7 +127,7 @@ export function registerSettings() {
       game.scope.period.refresh();
     }
   });
-  game.settings.register("Scope", "bookend", {
+  game.settings.register("scope", "bookend", {
     name: "SCOPE.SETTINGS.BookendPosition",
     hint: "SCOPE.SETTINGS.BookendPositionH",
     scope: "world",
@@ -143,7 +137,7 @@ export function registerSettings() {
     onChange: () => {
     }
   });
-  game.settings.register("Scope", "spacing", {
+  game.settings.register("scope", "spacing", {
     name: "SCOPE.SETTINGS.Spacing",
     hint: "SCOPE.SETTINGS.SpacingH",
     scope: "world",
@@ -153,7 +147,7 @@ export function registerSettings() {
     onChange: () => {
     }
   });
-  game.settings.register("Scope", "fromTop", {
+  game.settings.register("scope", "fromTop", {
     name: "SCOPE.SETTINGS.FromTop",
     hint: "SCOPE.SETTINGS.FromTopH",
     scope: "world",
@@ -163,7 +157,7 @@ export function registerSettings() {
     onChange: () => {
     }
   });
-  game.settings.register("Scope", "attached", {
+  game.settings.register("scope", "attached", {
     name: "SCOPE.SETTINGS.MoveAttached",
     hint: "SCOPE.SETTINGS.MoveAttachedH",
     scope: "world",
@@ -173,7 +167,7 @@ export function registerSettings() {
     onChange: () => {
     }
   });
-  game.settings.register("Scope", "arrange", {
+  game.settings.register("scope", "arrange", {
     name: "SCOPE.SETTINGS.Arrange",
     hint: "SCOPE.SETTINGS.ArrangeH",
     scope: "world",

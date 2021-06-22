@@ -41,7 +41,7 @@ export class CardList {
     let card = new CardScope(note);
     card.children = new CardList(SCOPE.sortDirection.opposite[this.sortDirection], SCOPE.relationships[this.type].child);
     if ( this.head ) {
-      let scene = game.scenes.getName("Scope");
+      let scene = game.scenes.getName("scope");
       let targetCard = this._findTargetCard(this.sortDirection, note.data[this.sortDirection], this.head);
       if ( targetCard ) {
         const shiftIt = droppedOn(scene, note, targetCard);
@@ -113,13 +113,14 @@ export class CardList {
     if ( !card ) return false;
 
     let removeDrawings = [];
-    let scene = game.scenes.getName("Scope");
+    let scene = game.scenes.getName("scope");
 
     // Is the head of the list being removed?
     if ( this.head.id === card.id ) {
       this.head = card.next;
       if ( this.head ) {
         this.head.prev = null;
+        this.decrementOrderFrom(this.head);
         removeDrawings.push(this.head.connectors.prev[this.sortDirection])
       }
       if ( this.parent ) {
@@ -147,6 +148,8 @@ export class CardList {
       card.prev.next = card.next;
     if ( card.next )
       card.next.prev = card.prev;
+
+    this.decrementOrderFrom(card);
 
     if ( card.connectors.prev[this.sortDirection] ) removeDrawings.push(card.connectors.prev[this.sortDirection]);
     if ( card.connectors.next[this.sortDirection] ) removeDrawings.push(card.connectors.next[this.sortDirection]);
@@ -208,6 +211,15 @@ export class CardList {
   }
 
   /**
+   *
+   * @param {CardScope} card
+   */
+  decrementOrderFrom(card) {
+    card.order = card.order - 1;
+    if (card.next) this.decrementOrderFrom(card.next);
+  }
+
+  /**
    * Find the card in the list that matches the provided field with the given value.
    * This will only search the list, not any children.
    * @param field {string}
@@ -241,7 +253,7 @@ export class CardList {
     }
     if ( !card ) return false;
 
-    if ( game.settings.get("Scope", "attached") && card.children.head !== null ) {
+    if ( game.settings.get("scope", "attached") && card.children.head !== null ) {
       const dx = x - card.x;
       const dy = y - card.y;
       await card.children._shiftList(dx, dy);
@@ -258,7 +270,7 @@ export class CardList {
     // If moving the head of a child list, remove the head -> parent connector
     if ( this.parent && this.head.id === card.id ) drawingIds.push(card.connectors.prev[this.sortDirection]);
 
-    let scene = game.scenes.getName("Scope");
+    let scene = game.scenes.getName("scope");
     try {
       await scene.deleteEmbeddedDocuments("Drawing", drawingIds);
     } catch (ex) {
@@ -346,7 +358,7 @@ export class CardList {
    */
   async arrangeList(bookend) {
 
-    let scene = game.scenes.getName("Scope");
+    let scene = game.scenes.getName("scope");
     let drawingIds = [];
     let childLists = [];
 
@@ -395,11 +407,11 @@ export class CardList {
     let y;
 
     if ( this.sortDirection === SCOPE.sortDirection.horizontal ) {
-      x = ptr.prev.x + SCOPE.noteSettings[this.type].spacing.x + game.settings.get("Scope", "spacing");
+      x = ptr.prev.x + SCOPE.noteSettings[this.type].spacing.x + game.settings.get("scope", "spacing");
       y = ptr.prev.y;
     } else {
       x = ptr.prev.x;
-      y = ptr.prev.y + SCOPE.noteSettings[this.type].spacing.y + game.settings.get("Scope", "spacing");
+      y = ptr.prev.y + SCOPE.noteSettings[this.type].spacing.y + game.settings.get("scope", "spacing");
     }
 
     return {x: x, y: y};
@@ -454,7 +466,7 @@ export class CardList {
     }
     currentList.push(canvas.notes.get(ptr.noteId));
 
-    let scene = game.scenes.getName("Scope");
+    let scene = game.scenes.getName("scope");
     try {
       await scene.deleteEmbeddedDocuments("Drawing", removeDrawings);
     } catch (ex) {
@@ -470,7 +482,7 @@ export class CardList {
   }
 
   async attach(type, note, cardId) {
-    let scene = game.scenes.getName("Scope");
+    let scene = game.scenes.getName("scope");
     let targetCard;
     if ( cardId ) {
       targetCard = this.findCard("id", cardId);
@@ -487,11 +499,16 @@ export class CardList {
     let children = targetCard.children;
     if ( !children.head.connectors.prev[children.sortDirection] ) {
       let cid = await children._createConnection(scene, targetCard, card);
-      targetCard.connectors.next[children.sortDirection] = cid;
-      children.head.connectors.prev[children.sortDirection] = cid;
+      if (children.sortDirection === SCOPE.sortDirection.horizontal) {
+        targetCard.connectors.next = {x: cid, y: ""};
+        children.head.connectors.prev = {x: cid, y: ""};
+      } else {
+        targetCard.connectors.next = {x: "", y: cid};
+        children.head.connectors.prev = {x: "", y: cid};
+      }
     }
 
-    return {cardId: card.id, attachId: targetCard.id};
+    return card;
   }
 
   /**
@@ -572,6 +589,11 @@ export class CardList {
     let options = {};
     options = Object.assign(options, SCOPE.connectors);
     let points = [[0, 0], [card2.x - card1.x, card2.y - card1.y]];
+    console.log("POINTS: " + points);
+    if (isNaN(points[1][0]))
+        console.log("NAN x: " + points[1][0])
+    if (isNaN(points[1][1]))
+      console.log("NAN y: " + points[1][1])
     let dynamicOptions = {
       x: card1.x,
       y: card1.y,
@@ -581,10 +603,9 @@ export class CardList {
       strokeColor: getFromTheme("period-link-color")
     }
 
-    foundry.utils.mergeObject(options, dynamicOptions);
-    let d = await DrawingDocument.create(options, {parent: canvas.scene});
-    //scene.createEmbeddedDocuments("Drawing", [d]);
-    return d.data._id;
+      foundry.utils.mergeObject(options, dynamicOptions);
+      let d = await DrawingDocument.create(options, {parent: canvas.scene});
+      return d.data._id;
   }
 
   /**

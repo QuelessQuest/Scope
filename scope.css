@@ -1,5 +1,5 @@
 :root {
-  --scope-scene-background: "systems/Scope/assets/themes/whitespace/background.jpg";
+  --scope-scene-background: "systems/scope/assets/themes/whitespace/background.jpg";
   --scope-bg-color: #7F7F7F;
   --scope-bg-color-half: #7F7F7F80;
   --scope-bg-window-blend-mode: 'luminosity';
