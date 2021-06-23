@@ -15,35 +15,35 @@ import {patchCore} from "./module/patch.js";
  * Initialization of the game environment
  */
 Hooks.once("init", function () {
-  console.log(`SCOPE | Initializing Scope ============================`);
+    console.log(`SCOPE | Initializing Scope ============================`);
 
-  CONFIG.scope = SCOPE;
-  CONFIG.ui.journal = JournalDirectoryScope;
-  CONFIG["JournalEntry"]["sheetClass"] = JournalSheetScope;
-  game.scope = SCOPE.namespace;
-  game.scope.period = new CardList(SCOPE.sortDirection.horizontal, "period");
+    CONFIG.scope = SCOPE;
+    CONFIG.ui.journal = JournalDirectoryScope;
+    CONFIG["JournalEntry"]["sheetClass"] = JournalSheetScope;
+    game.scope = SCOPE.namespace;
+    game.scope.period = new CardList(SCOPE.sortDirection.horizontal, "period");
 
-  registerSettings();
-  patchCore();
+    registerSettings();
+    patchCore();
 
-  game.scope.bookend = game.settings.get('scope', 'bookend') || SCOPE.Bookends.position;
+    game.scope.bookend = game.settings.get('scope', 'bookend') || SCOPE.Bookends.position;
 });
 
 Hooks.once("ready", async function () {
-  await _prepareScene();
-  await _prepareFolders();
-  game.journal.directory.activate();
-  canvas.notes.activate();
+    await _prepareScene();
+    await _prepareFolders();
+    game.journal.directory.activate();
+    canvas.notes.activate();
 });
 
 /**
  * Prepare the scene if it hasn't yet been prepared
  */
 Hooks.on("updateScene", async (entity, data, options, userId) => {
-  if ( SCOPE.scenePrepared ) return;
+    if (SCOPE.scenePrepared) return;
 
-  await _prepareSceneText(entity);
-  SCOPE.scenePrepared = true;
+    await _prepareSceneText(entity);
+    SCOPE.scenePrepared = true;
 });
 
 /**
@@ -56,14 +56,14 @@ Hooks.on("updateScene", async (entity, data, options, userId) => {
  * @private
  */
 async function _prepareScene() {
-  let scene = game.scenes.getName("scope");
-  if ( scene ) {
-    SCOPE.scenePrepared = true;
-    await _prepareSceneText(scene);
-  } else {
-    let x = await Scene.create(SCOPE.scene);
-    await Scene.updateDocuments([{_id: x._id, active: true, img: "systems/scope/assets/themes/whitespace/background.jpg"}]);
-  }
+    let scene = game.scenes.getName("scope");
+    if (scene) {
+        SCOPE.scenePrepared = true;
+        await _prepareSceneText(scene);
+    } else {
+        let x = await Scene.create(SCOPE.scene);
+        await Scene.updateDocuments([{_id: x._id, active: true, img: "systems/scope/assets/themes/whitespace/background.jpg"}]);
+    }
 }
 
 /**
@@ -73,51 +73,51 @@ async function _prepareScene() {
  * @private
  */
 async function _prepareSceneText(scene) {
-  console.log("Preparing Scene Text");
-  let drawings = scene.getEmbeddedCollection("Drawing");
-  let bpd = drawings.filter(d => d.getFlag("scope", "type") === "bigPicture");
-  let fld = drawings.filter(d => d.getFlag("scope", "type") === "focusLabel");
-  let fd = drawings.filter(d => d.getFlag("scope", "type") === "focus");
-  let legLabel = drawings.filter(d => d.getFlag("scope", "type") === "legacyLabel");
-  let leg = drawings.filter(d => d.getFlag("scope", "type") === "legacy");
-  let bp;
-  let focus;
-  if ( bpd.length > 0 ) {
-    bp = bpd;
-  } else {
-    bp = await _createText(scene, "bigPicture");
-  }
-  if ( fld.length === 0 ) {
-    await _createText(scene, "focusLabel");
-  }
-  if ( legLabel.length === 0 ) {
-    await _createText(scene, "legacyLabel");
-  }
-  if ( fd.length > 0 ) {
-    focus = fd;
-  } else {
-    focus = await _createText(scene, "focus");
-  }
-
-  let legList = [];
-  if ( leg.length > 0 ) {
-    for (const legacy of leg) {
-      legList.push({id: legacy.data._id, text: legacy.data.text});
+    console.log("Preparing Scene Text");
+    let drawings = scene.getEmbeddedCollection("Drawing");
+    let bpd = drawings.filter(d => d.getFlag("scope", "type") === "bigPicture");
+    let fld = drawings.filter(d => d.getFlag("scope", "type") === "focusLabel");
+    let fd = drawings.filter(d => d.getFlag("scope", "type") === "focus");
+    let legLabel = drawings.filter(d => d.getFlag("scope", "type") === "legacyLabel");
+    let leg = drawings.filter(d => d.getFlag("scope", "type") === "legacy");
+    let bp;
+    let focus;
+    if (bpd.length > 0) {
+        bp = bpd;
+    } else {
+        bp = await _createText(scene, "bigPicture");
     }
-  } else {
-    for (let i = 0; i < SCOPE.legacies.length; i++) {
-      let legText = await _createText(scene, "legacy", SCOPE.legacies[i], i);
-      legList.push({id: legText[0].data._id, text: legText[0].data.text});
+    if (fld.length === 0) {
+        await _createText(scene, "focusLabel");
     }
-  }
+    if (legLabel.length === 0) {
+        await _createText(scene, "legacyLabel");
+    }
+    if (fd.length > 0) {
+        focus = fd;
+    } else {
+        focus = await _createText(scene, "focus");
+    }
 
-  game.scope.focus = {
-    id: focus[0].data._id,
-    text: focus[0].data.text,
-    bpId: bp[0].data._id,
-    bpText: bp[0].data.text
-  }
-  game.scope.legacies = legList;
+    let legList = [];
+    if (leg.length > 0) {
+        for (const legacy of leg) {
+            legList.push({id: legacy.data._id, text: legacy.data.text});
+        }
+    } else {
+        for (let i = 0; i < SCOPE.legacies.length; i++) {
+            let legText = await _createText(scene, "legacy", SCOPE.legacies[i], i);
+            legList.push({id: legText[0].data._id, text: legText[0].data.text});
+        }
+    }
+
+    game.scope.focus = {
+        id: focus[0].data._id,
+        text: focus[0].data.text,
+        bpId: bp[0].data._id,
+        bpText: bp[0].data.text
+    }
+    game.scope.legacies = legList;
 }
 
 /**
@@ -131,44 +131,44 @@ async function _prepareSceneText(scene) {
  */
 async function _createText(scene, type, text = "", sequence = 0) {
 
-  let x = (scene.data.width / 2) - (SCOPE[type].width / 2);
-  let color = "";
-  let yOverride = 0;
-  switch (type) {
-    case "focus":
-      color = getFromTheme("focus-color");
-      break;
-    case "focusLabel":
-      color = getFromTheme("focus-label-color");
-      break;
-    case "bigPicture":
-      color = getFromTheme("focus-label-color");
-      break;
-    case "legacyLabel":
-      color = getFromTheme("legacy-label-color");
-      x = x / 1.5;
-      break;
-    case "legacy":
-      color = getFromTheme("legacy-color");
-      x = x / 1.5;
-      yOverride = SCOPE.legacyListStart;
-  }
-  let drawingData = {
-    textColor: color,
-    x: x,
-    flags: {
-      scope: {
-        type: type,
-        ftype: CONST.DRAWING_TYPES.TEXT
-      }
+    let x = (scene.data.width / 2) - (SCOPE[type].width / 2);
+    let color = "";
+    let yOverride = 0;
+    switch (type) {
+        case "focus":
+            color = getFromTheme("focus-color");
+            break;
+        case "focusLabel":
+            color = getFromTheme("focus-label-color");
+            break;
+        case "bigPicture":
+            color = getFromTheme("focus-label-color");
+            break;
+        case "legacyLabel":
+            color = getFromTheme("legacy-label-color");
+            x = x / 1.5;
+            break;
+        case "legacy":
+            color = getFromTheme("legacy-color");
+            x = x / 1.5;
+            yOverride = SCOPE.legacyListStart;
     }
-  };
+    let drawingData = {
+        textColor: color,
+        x: x,
+        flags: {
+            scope: {
+                type: type,
+                ftype: CONST.DRAWING_TYPES.TEXT
+            }
+        }
+    };
 
-  if ( text ) foundry.utils.mergeObject(drawingData, {text: text});
-  foundry.utils.mergeObject(drawingData, SCOPE[type]);
-  if (yOverride > 0) foundry.utils.mergeObject(drawingData, {y: yOverride + (sequence * SCOPE[type].height)});
+    if (text) foundry.utils.mergeObject(drawingData, {text: text});
+    foundry.utils.mergeObject(drawingData, SCOPE[type]);
+    if (yOverride > 0) foundry.utils.mergeObject(drawingData, {y: yOverride + (sequence * SCOPE[type].height)});
 
-  return  await scene.createEmbeddedDocuments("Drawing", [drawingData]);
+    return await scene.createEmbeddedDocuments("Drawing", [drawingData]);
 }
 
 /**
@@ -181,11 +181,11 @@ async function _createText(scene, type, text = "", sequence = 0) {
  * @private
  */
 async function _prepareFolders() {
-  const folder = game.i18n.localize("SCOPE.JournalFolder");
-  let journalFolders = game.folders.filter(f => f.type === "JournalEntry");
-  await _createFolder(journalFolders, folder, "period");
-  await _createFolder(journalFolders, folder, "event");
-  await _createFolder(journalFolders, folder, "scene");
+    const folder = game.i18n.localize("SCOPE.JournalFolder");
+    let journalFolders = game.folders.filter(f => f.type === "JournalEntry");
+    await _createFolder(journalFolders, folder, "period");
+    await _createFolder(journalFolders, folder, "event");
+    await _createFolder(journalFolders, folder, "scene");
 }
 
 /**
@@ -197,23 +197,23 @@ async function _prepareFolders() {
  * @private
  */
 async function _createFolder(folders, folder, type) {
-  const nameFromType = type[0].toUpperCase() + type.substr(1);
-  const name = game.i18n.localize(`SCOPE.Journal${nameFromType}Plural`);
-  const folderData = new foundry.data.FolderData({
-    name: name,
-    parent: null,
-    type: "JournalEntry",
-    flags: {
-      scope: {
-        type: type
-      }
-    }
-  });
+    const nameFromType = type[0].toUpperCase() + type.substr(1);
+    const name = game.i18n.localize(`SCOPE.Journal${nameFromType}Plural`);
+    const folderData = new foundry.data.FolderData({
+        name: name,
+        parent: null,
+        type: "JournalEntry",
+        flags: {
+            scope: {
+                type: type
+            }
+        }
+    });
 
-  if ( !folders.find(f => f.getFlag("scope", "type") === type) ) {
-    console.log(`Creating ${name} ${folder}`);
-    await Folder.create(folderData);
-  }
+    if (!folders.find(f => f.getFlag("scope", "type") === type)) {
+        console.log(`Creating ${name} ${folder}`);
+        await Folder.create(folderData);
+    }
 }
 
 /**
@@ -226,62 +226,46 @@ async function _createFolder(folders, folder, type) {
  */
 Hooks.on("canvasReady", async () => {
 
-  // Initialize the collision detection. Used to determine if cards overlap
-  SCOPE.bump = new Bump(PIXI);
+    // Initialize the collision detection. Used to determine if cards overlap
+    SCOPE.bump = new Bump(PIXI);
 
-  let scene = game.scenes.getName("scope");
+    let scene = game.scenes.getName("scope");
 
-  // Remove any existing connectors from the scene
-  let drawings = scene.getEmbeddedCollection("Drawing");
-  /*
-  const map0 = new Map([
-  ['a', 1],
-  ['b', 2],
-  ['c', 3]
-]);
+    // Remove any existing connectors from the scene
+    let drawings = scene.getEmbeddedCollection("Drawing");
+    let drawingsToClear = [...drawings].filter(d => d.getFlag("scope", "type") === "connector").map(d => d.data._id);
+    if (drawingsToClear.length > 0)
+        try {
+            await scene.deleteEmbeddedDocuments("Drawing", drawingsToClear);
+        } catch (ex) {
+            console.log("Attempted to delete a non-existent drawing. Just carry on.");
+        }
 
-const map1 = new Map(
-  [...map0]
-  .filter(([k, v]) => v < 3 )
-);
+    let notes = scene.getEmbeddedCollection("Note");
 
-console.info([...map1]);
-//[0: ["a", 1], 1: ["b", 2]]
-   */
-  //let drawingsToClear = drawings.filter(d => d.getFlag("Scope", "type") === "connector").map(d => d.data._id);
-  //let xxx = [...drawings].filter(([k,v] )=> v.getFlag("Scope", "type") === "connector").map(([k,v]) => v.data._id);
-  let drawingsToClear = [...drawings].filter(d => d.getFlag("scope", "type") === "connector").map(d => d.data._id);
-  if ( drawingsToClear.length > 0 )
-    try {
-      await scene.deleteEmbeddedDocuments("Drawing", drawingsToClear);
-    } catch (ex) {
-      console.log("Attempted to delete a non-existent drawing. Just carry on.");
+    // Rebuild the period list, adding back connectors
+    let periodNotes = notes.filter(n => n.getFlag("scope", "type") === "period");
+
+    // Order of notes is not saved in the data naturally, we must recreate the periods in order so what is displayed
+    // on screen matches what is stored in game.scope.period
+    const sortedPeriods = periodNotes.sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
+    for (const period of sortedPeriods) {
+        await game.scope.period.add(period);
     }
 
-  let notes = scene.getEmbeddedCollection("Note");
+    // Rebuild the events, adding back connectors
+    let eventNotes = notes.filter(n => n.getFlag("scope", "type") === "event");
+    let eventGroups = eventNotes.reduce((r, a) => {
+        const periodNote = a.getFlag("scope", "periodNote");
+        r[periodNote] = [...r[periodNote] || [], a];
+        return r;
+    }, {});
 
-  // Rebuild the period list, adding back connectors
-  let periodNotes = notes.filter(n => n.getFlag("scope", "type") === "period");
-
-  // Order of notes is not saved in the data naturally, we must recreate the periods in order so what is displayed
-  // on screen matches what is stored in game.scope.period
-  const sortedPeriods = periodNotes.sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
-  for (const period of sortedPeriods) {
-    await game.scope.period.add(period);
-  }
-
-  // Rebuild the events, adding back connectors
-  let eventNotes = notes.filter(n => n.getFlag("scope", "type") === "event");
-  let eventGroups = eventNotes.reduce((r, a) => {
-    const periodNote = a.getFlag("scope", "periodNote");
-    r[periodNote] = [...r[periodNote] || [], a];
-    return r;
-  }, {});
-
-  for (const group in eventGroups) {
-    let period = game.scope.period.findCard("noteId", group);
-    eventGroups[group].forEach(note => game.scope.period.attach("event", note, period.id));
-  }
+    for (const group in eventGroups) {
+        let period = game.scope.period.findCard("noteId", group);
+        const sortedEvents = eventGroups[group].sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
+        sortedEvents.forEach(note => game.scope.period.attach("event", note, period.id));
+    }
 });
 
 /**
@@ -292,34 +276,35 @@ console.info([...map1]);
  * When a journal entry is dropped onto the canvas, create a note
  */
 Hooks.on("dropCanvasData", (canvas, data) => {
-  if ( data.type !== "JournalEntry" ) return;
-  const type = game.journal.get(data.id).getFlag("scope", "type");
-  switch (type) {
-    case "period":
-      insertNote(data.id, {x: data.x, y: data.y});
-      break;
-    case "event":
-      break;
-    case "scene":
-      break;
-    case "legacy":
-      break;
-  }
+    if (data.type !== "JournalEntry") return;
+    const type = game.journal.get(data.id).getFlag("scope", "type");
+    switch (type) {
+        case "period":
+            insertNote(data.id, {x: data.x, y: data.y});
+            break;
+        case "event":
+            insertNote(data.id, {x: data.x, y: data.y});
+            break;
+        case "scene":
+            break;
+        case "legacy":
+            break;
+    }
 
-  return false;
+    return false;
 });
 
 /**
  * Rerender the connectors when the note is moved.
  */
 Hooks.on("updateNote", async (entity, d, options, userid) => {
-  const noteId = d._id;
-  if ( !game.scope.period.canRefresh ) return;
-  if (isNaN(d.x) || isNaN(d.y)) {
-    console.log("Got a NaN");
-    return;
-  }
-  await game.scope.period.updateCard(noteId, {x: d.x, y: d.y});
+    const noteId = d._id;
+    if (!game.scope.period.canRefresh) return;
+    if (isNaN(d.x) || isNaN(d.y)) {
+        console.log("Got a NaN");
+        return;
+    }
+    await game.scope.period.updateCard(noteId, {x: d.x, y: d.y});
 });
 
 /**
@@ -328,81 +313,92 @@ Hooks.on("updateNote", async (entity, d, options, userid) => {
  */
 Hooks.on("createNote", async (noteDocument, options) => {
 
-  Object.defineProperty(noteDocument, "centerX", {
-    get: function get() {
-      return noteDocument.x;
-    },
-    enumerable: true, configurable: true
-  });
-  Object.defineProperty(noteDocument, "centerY", {
-    get: function get() {
-      return noteDocument.y;
-    },
-    enumerable: true, configurable: true
-  });
+    let scene = game.scenes.getName("scope");
 
-  const entry = game.journal.get(noteDocument.data.entryId);
-  const tone = entry.getFlag("scope", "tone");
-  const type = entry.getFlag("scope", "type");
-  const periodAttach = entry.getFlag("scope", "periodAttach");
-  const eventAttach = entry.getFlag("scope", "eventAttach");
-  let periodNoteId = "none";
-  let eventNoteId = "none";
-  if ( periodAttach && periodAttach !== "none" ) {
-    periodNoteId = game.scope.period.findCard("id", periodAttach).noteId;
-  }
+    Object.defineProperty(noteDocument, "centerX", {
+        get: function get() {
+            return noteDocument.x;
+        },
+        enumerable: true, configurable: true
+    });
+    Object.defineProperty(noteDocument, "centerY", {
+        get: function get() {
+            return noteDocument.y;
+        },
+        enumerable: true, configurable: true
+    });
 
-  let card;
-  switch (type) {
-    case "period":
-      card = await game.scope.period.add(noteDocument);
-      break;
-    case "event":
-      // TODO - Need to calculate the notes x/y if not dropped, but attached
-      if ( periodAttach !== "none" ) {
-        if ( eventAttach === "none" )
-          card = await game.scope.period.attach(type, noteDocument, periodAttach);
-        else {
-          const periodCard = game.scope.period.findCard("id", periodAttach, game.scope.period.head);
-          card = periodCard.children.add(noteDocument);
+    const entry = game.journal.get(noteDocument.data.entryId);
+    const tone = entry.getFlag("scope", "tone");
+    const type = entry.getFlag("scope", "type");
+    const periodAttach = entry.getFlag("scope", "periodAttach");
+    const eventAttach = entry.getFlag("scope", "eventAttach");
+    const sceneAttach = entry.getFlag("scope", "sceneAttach");
+    let periodNoteId = "none";
+    let eventNoteId = "none";
+    let sceneNoteId = "none";
+    let periodCard;
+    let eventCard;
+    if (periodAttach && periodAttach !== "none") {
+        periodCard = game.scope.period.findCard("id", periodAttach);
+        periodNoteId = periodCard.noteId;
+        if (eventAttach && eventAttach !== "none") {
+            eventCard = periodCard.children.findCard("id", eventAttach);
+            eventNoteId = eventCard.noteId;
+            if (sceneAttach && sceneAttach !== "none") {
+                sceneNoteId = eventCard.children.findCard("id", sceneAttach).noteId;
+            }
         }
-      }
-      break;
-    case "scene":
-      break;
-    case "legacy":
-      break;
-  }
+    }
 
-  let flagData = SCOPE.noteSettings[type];
-  let flagTypeData = {
-    tone: tone,
-    labelBorderColor: getFromTheme(`${type}-label-stroke-color`),
-    noteBorderColor: getFromTheme("border-color"),
-    periodNote: periodNoteId,
-    eventNote: eventNoteId,
-    order: card.order
-  }
-  flagData = foundry.utils.mergeObject(flagData, flagTypeData);
-  const flags = {
-    scope: flagData
-  }
+    let card;
+    switch (type) {
+        case "period":
+            card = await game.scope.period.add(noteDocument);
+            break;
+        case "event":
+            card = await game.scope.period.attach(type, noteDocument, periodAttach);
+            periodNoteId = card.group;
+            console.log(card);
+            break;
+        case "scene":
+            card = await periodCard.children.attach(type, noteDocument, eventAttach);
+            eventNoteId = card.group;
+            periodNoteId = eventCard.group;
+            break;
+        case "legacy":
+            break;
+    }
 
-  let typeData = {
-    _id: noteDocument.data._id,
-    text: entry.data.name,
-    icon: SCOPE.icons[type],
-    iconSize: SCOPE.noteSettings[type].iconWidth,
-    iconTint: getFromTheme(`${type}-icon-color`),
-    fontSize: getFromTheme(`${type}-label-size`),
-    textColor: getFromTheme(`${type}-label-color`),
-    flags: flags
-  }
+    let flagData = SCOPE.noteSettings[type];
+    let flagTypeData = {
+        tone: tone,
+        labelBorderColor: getFromTheme(`${type}-label-stroke-color`),
+        noteBorderColor: getFromTheme("border-color"),
+        periodNote: periodNoteId,
+        eventNote: eventNoteId,
+        sceneNote: sceneNoteId,
+        order: card.order
+    }
+    flagData = foundry.utils.mergeObject(flagData, flagTypeData);
+    const flags = {
+        scope: flagData
+    }
 
-  game.scope.period.lockRefresh();
-  let scene = game.scenes.getName("scope");
-  await scene.updateEmbeddedDocuments("Note", [typeData]);
-  game.scope.period.unlockRefresh();
+    let typeData = {
+        _id: noteDocument.data._id,
+        text: entry.data.name,
+        icon: SCOPE.icons[type],
+        iconSize: SCOPE.noteSettings[type].iconWidth,
+        iconTint: getFromTheme(`${type}-icon-color`),
+        fontSize: getFromTheme(`${type}-label-size`),
+        textColor: getFromTheme(`${type}-label-color`),
+        flags: flags
+    }
+
+    game.scope.period.lockRefresh();
+    await scene.updateEmbeddedDocuments("Note", [typeData]);
+    game.scope.period.unlockRefresh();
 
 });
 
@@ -412,7 +408,7 @@ Hooks.on("createNote", async (noteDocument, options) => {
  * any associated drawings.
  */
 Hooks.on("deleteNote", async (noteDocument, options, userId) => {
-  await _deleteNote(noteDocument.data._id);
+    await _deleteNote(noteDocument.data._id);
 });
 
 /**
@@ -421,9 +417,9 @@ Hooks.on("deleteNote", async (noteDocument, options, userId) => {
  * @private
  */
 async function _deleteNote(noteId) {
-  console.log("Deleting Note with id: " + noteId);
-  let scene = game.scenes.getName("scope");
-  await game.scope.period.remove(noteId);
+    console.log("Deleting Note with id: " + noteId);
+    let scene = game.scenes.getName("scope");
+    await game.scope.period.remove(noteId);
 }
 
 /**
@@ -434,7 +430,7 @@ async function _deleteNote(noteId) {
  * If a JournalEntry is removed, so is the associated note and any connectors
  */
 Hooks.on("deleteJournalEntry", async (entity, options, userId) => {
-  let note = entity.sceneNote;
-  if ( !note ) return;
-  await _deleteNote(note.id);
+    let note = entity.sceneNote;
+    if (!note) return;
+    await _deleteNote(note.id);
 });

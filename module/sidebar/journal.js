@@ -39,20 +39,10 @@ export class JournalDirectoryScope extends JournalDirectory {
     const nameFromType = type[0].toUpperCase() + type.substr(1);
 
     let folderId = "";
-    if ( type !== "picture" && type !== "palette" && type !== "focus" && type !== "legacy" ) {
+    if (type !== "picture" && type !== "palette" && type !== "focus" && type !== "legacy") {
       const folder = game.folders.filter(f => f.data.type === "JournalEntry").find(f => f.getFlag("scope", "type") === type);
       folderId = folder.id;
     }
-
-    let data = {
-      name: game.i18n.localize(`SCOPE.Create${nameFromType}`),
-      folderId: folderId,
-      options: {
-        width: 320,
-        left: window.innerWidth - 630,
-        top: button.offsetTop
-      }
-    };
 
     return {
       name: game.i18n.localize(`SCOPE.Create${nameFromType}`),
@@ -94,7 +84,9 @@ export class JournalDirectoryScope extends JournalDirectory {
     let typeName = "";
     let attachCard = "";
     let eventCards = null;
+    let sceneCards = null;
     let attachSubCard = "";
+    let attachSubSubCard = "";
     let text = "";
     let id = "";
     let legacyData = {};
@@ -109,6 +101,14 @@ export class JournalDirectoryScope extends JournalDirectory {
         typeName = game.i18n.localize('SCOPE.JournalEvent');
         attachCard = game.i18n.localize('SCOPE.JournalPeriod');
         attachSubCard = typeName;
+        break;
+      case "scene":
+        eventCards = {"none": "--"};
+        sceneCards = {"none": "--"};
+        typeName = game.i18n.localize('SCOPE.JournalScene');
+        attachCard = game.i18n.localize('SCOPE.JournalPeriod');
+        attachSubCard = game.i18n.localize('SCOPE.JournalEvent');
+        attachSubSubCard = typeName;
         break;
       case "picture":
         typeName = game.i18n.localize("SCOPE.UpdatePicture");
@@ -135,8 +135,10 @@ export class JournalDirectoryScope extends JournalDirectory {
       cardSelected: "none",
       attachCard: attachCard,
       eventCards: eventCards,
+      sceneCards: sceneCards,
       subCardSelected: "none",
-      attachSubCards: attachSubCard,
+      attachSubCard: attachSubCard,
+      attachSubSubCard: attachSubSubCard,
       tone: "tone",
       endTone: "endTone",
       tones: {light: "SCOPE.JournalLight", dark: "SCOPE.JournalDark"},
@@ -158,22 +160,22 @@ export class JournalDirectoryScope extends JournalDirectory {
   _onCreate(event, type, callback) {
     const data = this._getData(type, event.currentTarget);
     renderTemplate(
-        `systems/scope/templates/journal/journal-create-${type}.html`,
-        this._getDialogData(type, data))
-        .then(content => {
-          new DialogScope({
-            title: data.name,
-            content: content,
-            buttons: {
-              create: {
-                icon: '<i class="fas fa-check"></i>',
-                label: data.name,
-                callback: callback
-              }
-            },
-            default: "create"
-          }, data.options).render(true);
-        });
+      `systems/scope/templates/journal/journal-create-${type}.html`,
+      this._getDialogData(type, data))
+      .then(content => {
+        new DialogScope({
+          title: data.name,
+          content: content,
+          buttons: {
+            create: {
+              icon: '<i class="fas fa-check"></i>',
+              label: data.name,
+              callback: callback
+            }
+          },
+          default: "create"
+        }, data.options).render(true);
+      });
   }
 
   /**
@@ -186,36 +188,36 @@ export class JournalDirectoryScope extends JournalDirectory {
     const data = this._getData("period", event.currentTarget);
 
     renderTemplate(
-        `systems/scope/templates/journal/journal-create-bookends.html`,
-        this._getDialogData("period", data))
-        .then(content => {
-          new DialogScope({
-            title: game.i18n.localize("SCOPE.CreateBookends"),
-            content: content,
-            buttons: {
-              create: {
-                icon: '<i class="fas fa-check"></i>',
-                label: game.i18n.localize("SCOPE.CreateBookends"),
-                callback: html => {
-                  const form = html[0].querySelector("form");
-                  const fd = new FormDataExtended(form);
-                  let fo = fd.toObject();
-                  this._createJournalEntry(fo.name, fo.tone, data.folderId, fo, "period").then(e => {
-                    const startId = e.id;
-                    this._createJournalEntry(fo.endName, fo.endTone, data.folderId, fo, "period").then(e2 => {
-                      const position = getBookendPositions();
-                      insertNote(startId, position.start).then(() => {
-                        insertNote(e2.id, position.end).then(() => {
-                        });
+      `systems/scope/templates/journal/journal-create-bookends.html`,
+      this._getDialogData("period", data))
+      .then(content => {
+        new DialogScope({
+          title: game.i18n.localize("SCOPE.CreateBookends"),
+          content: content,
+          buttons: {
+            create: {
+              icon: '<i class="fas fa-check"></i>',
+              label: game.i18n.localize("SCOPE.CreateBookends"),
+              callback: html => {
+                const form = html[0].querySelector("form");
+                const fd = new FormDataExtended(form);
+                let fo = fd.toObject();
+                this._createJournalEntry(fo.name, fo.tone, data.folderId, fo, "period").then(e => {
+                  const startId = e.id;
+                  this._createJournalEntry(fo.endName, fo.endTone, data.folderId, fo, "period").then(e2 => {
+                    const position = getBookendPositions();
+                    insertNote(startId, position.start).then(() => {
+                      insertNote(e2.id, position.end).then(() => {
                       });
                     });
                   });
-                }
+                });
               }
-            },
-            default: "create"
-          }, data.options).render(true);
-        });
+            }
+          },
+          default: "create"
+        }, data.options).render(true);
+      });
   }
 
   /**
@@ -228,33 +230,33 @@ export class JournalDirectoryScope extends JournalDirectory {
     event.preventDefault();
     event.stopPropagation();
 
-    if ( game.scope.period.head !== null ) {
+    if (game.scope.period.head !== null) {
       renderTemplate("systems/scope/templates/bookendWarning.html", {}).then(message => {
         new Dialog(
-            {
-              title: game.i18n.localize('SCOPE.Warning'),
-              content: message,
-              buttons: {
-                ok: {
-                  icon: '<i class="fas fa-sign-in-alt"></i>',
-                  label: game.i18n.localize('SCOPE.Continue'),
-                  callback: () => {
-                    this._createTheBookends(event);
-                  }
-                },
-                cancel: {
-                  icon: '<i class="fas fa-times"></i>',
-                  label: game.i18n.localize('Cancel'),
-                  callback: () => {
-                  }
+          {
+            title: game.i18n.localize('SCOPE.Warning'),
+            content: message,
+            buttons: {
+              ok: {
+                icon: '<i class="fas fa-sign-in-alt"></i>',
+                label: game.i18n.localize('SCOPE.Continue'),
+                callback: () => {
+                  this._createTheBookends(event);
+                }
+              },
+              cancel: {
+                icon: '<i class="fas fa-times"></i>',
+                label: game.i18n.localize('Cancel'),
+                callback: () => {
                 }
               }
-            },
-            {
-              width: 320,
-              left: window.innerWidth - 630,
-              top: event.currentTarget.offsetTop
-            }).render(true)
+            }
+          },
+          {
+            width: 320,
+            left: window.innerWidth - 630,
+            top: event.currentTarget.offsetTop
+          }).render(true)
       });
     } else
       this._createTheBookends(event);
@@ -294,7 +296,7 @@ export class JournalDirectoryScope extends JournalDirectory {
       const fd = new FormDataExtended(form);
       let fo = fd.toObject();
       let id;
-      if ( type === "legacy" )
+      if (type === "legacy")
         id = fo.changeLegacy;
       else
         id = fo.id;
@@ -320,7 +322,12 @@ export class JournalDirectoryScope extends JournalDirectory {
       const fd = new FormDataExtended(form);
       let fo = fd.toObject();
       this._createJournalEntry(fo.name, fo.tone, fo.folderId, fo, type).then(e => {
-        this._maybeCreateNote(e.getFlag("scope", "periodAttach"), e.getFlag("scope", "eventAttach"), type, e.id);
+        this._maybeCreateNote(
+          e.getFlag("scope", "periodAttach"),
+          e.getFlag("scope", "eventAttach"),
+          e.getFlag("scope", "sceneAttach"),
+          type,
+          e.id);
       });
     });
   }
@@ -338,7 +345,9 @@ export class JournalDirectoryScope extends JournalDirectory {
   async _createJournalEntry(name, tone, folderId, fo, type) {
     const content = await renderTemplate(`systems/scope/templates/journal/journal-${type}.html`, fo);
     let eventAttach = "none";
-    if ( fo.eventAttach ) eventAttach = fo.eventAttach;
+    let sceneAttach = "none";
+    if (fo.eventAttach) eventAttach = fo.eventAttach;
+    if (fo.sceneAttach) sceneAttach = fo.sceneAttach;
     const createData = {
       content: content,
       name: name,
@@ -348,7 +357,8 @@ export class JournalDirectoryScope extends JournalDirectory {
           type: type,
           tone: tone,
           periodAttach: fo.periodAttach,
-          eventAttach: eventAttach
+          eventAttach: eventAttach,
+          sceneAttach: sceneAttach
         }
       }
     };
@@ -362,13 +372,14 @@ export class JournalDirectoryScope extends JournalDirectory {
    * are created when Journal Entries are dragged onto the canvas.
    * @param {string}  periodId
    * @param {string}  eventId
+   * @param {string}  sceneId
    * @param {string}  type
    * @param {string}  entityId
    * @private
    */
-  _maybeCreateNote(periodId, eventId, type, entityId) {
+  _maybeCreateNote(periodId, eventId, sceneId, type, entityId) {
 
-    if ( periodId && periodId !== "none" ) {
+    if (periodId && periodId !== "none") {
       switch (type) {
         case "period":
           insertNote(entityId, game.scope.period.getInsertPosition(periodId)).then(() => {
@@ -377,12 +388,12 @@ export class JournalDirectoryScope extends JournalDirectory {
         case "event":
           // Get the event x position
           const periodCard = game.scope.period.findCard("id", periodId);
-          if ( !periodCard ) {
+          if (!periodCard) {
             ui.notifications.warn("Something Bad Happened: Could not find the required period card", {permanent: true});
             return;
           }
 
-          if ( eventId !== "none" ) {
+          if (eventId !== "none") {
             const eventCards = game.scope.period.findCard("id", periodId).children;
             insertNote(entityId, eventCards.getInsertPosition(eventId)).then(() => {
             });
@@ -391,7 +402,7 @@ export class JournalDirectoryScope extends JournalDirectory {
             const eventX = periodCard.x;
             let eventY = 0;
             let insertAt = periodCard.children.getLast();
-            if ( insertAt ) {
+            if (insertAt) {
               ui.notifications.info("Period Attachment Requested without Event Entry Point set. Attaching to the End of the List")
               eventY = insertAt.y + SCOPE.noteSettings.event.spacing.y;
             } else {
@@ -402,6 +413,26 @@ export class JournalDirectoryScope extends JournalDirectory {
           }
           break;
         case "scene":
+          const pCard = game.scope.period.findCard("id", periodId);
+          if (eventId && eventId !== "none") {
+            if (sceneId !== "none") {
+            } else {
+
+              // No scene insertion point specified, attach to end of list
+              const eventCard = pCard.children.findCard("id", eventId);
+              const sceneY = eventCard.y;
+              let sceneX = 0;
+              let insertPoint = eventCard.children.getLast();
+              if (insertPoint) {
+                ui.notifications.info("Event Attachment Requested without Scene Entry Point set. Attaching to the End of the List")
+                sceneX = insertPoint.x + SCOPE.noteSettings.scene.spacing.x;
+              } else {
+                sceneX = eventCard.x + (SCOPE.noteSettings.event.iconWidth / 2) + (SCOPE.noteSettings.scene.iconWidth / 2) + 100;
+              }
+              insertNote(entityId, {x: sceneX, y: sceneY}).then(() => {
+              });
+            }
+          }
           break;
       }
     }

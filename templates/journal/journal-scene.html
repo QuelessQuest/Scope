@@ -1,19 +1,6 @@
-<form class="{{cssClass}}" autocomplete="off">
-    <input name="name" type="text" value="{{entity.name}}" placeholder="Entry Title"/>
-
-    <select name="folder">
-        {{#select entity.folder}}
-        <option value=""></option>
-        {{#each folders}}
-        <option value="{{this.id}}">{{this.name}}</option>
-        {{/each}}
-        {{/select}}
-    </select>
-
-    <p>SCENE</p>
-    {{editor content=entity.content target="content" button=true editable=editable owner=owner}}
-
-    {{#if editable}}
-    <button type="submit" name="submit"><i class="fas fa-feather-alt"></i> Save Entry</button>
-    {{/if}}
-</form>
+<div class="scope">
+    <div class="scope-scene">
+        {{desc}}
+        <img src='systems/scope/assets/{{tone}}.svg' width="50" height="50"/>
+    </div>
+</div>

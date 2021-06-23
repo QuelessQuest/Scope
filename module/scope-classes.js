@@ -31,6 +31,7 @@ export class CardScope {
     this.connectors.prev = {x: "", y: ""};
     this.connectors.next = {x: "", y: ""};
     this._order = 0;
+    this._group = null; // hold the object id under which this card a child
   }
 
   get id() {
@@ -51,6 +52,14 @@ export class CardScope {
 
   set order(newOrder) {
     this._order = newOrder;
+  }
+
+  get group() {
+    return this._group;
+  }
+
+  set group(newGroup) {
+    this._group = newGroup;
   }
 }
 
