@@ -6,6 +6,8 @@ import {getFromTheme} from "./helper.js";
 
 export class CardList {
   /**
+   * I'm sure there is a better way to do this. But this works for now.
+   *
    * A double linked list of card types, including the lines that link them
    * @param sortDirection {String}
    * @param type {String}
@@ -485,16 +487,16 @@ export class CardList {
    *
    * @param {string}        type
    * @param {NoteDocument}  note
-   * @param {string}         cardId
+   * @param {CardScope}     attachTo
    * @returns {Promise<*>}
    */
-  async attach(type, note, cardId) {
+  async attach(type, note, attachTo) {
     let scene = game.scenes.getName("scope");
     let searchDirection = "";
     if (type === "event") searchDirection = SCOPE.sortDirection.horizontal;
     let targetCard;
-    if (cardId && cardId !== "none") {
-      targetCard = this.findCard("id", cardId);
+    if (attachTo) {
+      targetCard = attachTo;
     } else {
       // TODO - More detailed logic here
       let noteLocation = searchDirection === SCOPE.sortDirection.horizontal ? note.data.x : note.data.y;
@@ -509,7 +511,12 @@ export class CardList {
     card.group = targetCard.children.parent.noteId;
 
     let children = targetCard.children;
-    if (!children.head.connectors.prev[children.sortDirection]) {
+    let isHead;
+    if (children.sortDirection === SCOPE.sortDirection.horizontal)
+      isHead = children.head.connectors.prev.x;
+    else
+      isHead = children.head.connectors.prev.y;
+    if (!isHead) {
       let cid = await children._createConnection(scene, targetCard, card);
       if (children.sortDirection === SCOPE.sortDirection.horizontal) {
         targetCard.connectors.next = {x: cid, y: ""};
