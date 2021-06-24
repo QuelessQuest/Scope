@@ -60,7 +60,7 @@ SCOPE.noteSettings = {
     },
     scene: {
         type: "scene",
-        iconWidth: 360,
+        iconWidth: 160,
         iconHeight: 160,
         spacing: {
             x: 100,

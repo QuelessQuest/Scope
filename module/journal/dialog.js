@@ -20,10 +20,9 @@ export class DialogScope extends Dialog {
   activateListeners(html) {
     if ( this.options.onChange ) {
       html.find('select[name="periodAttach"]').change(this._onChangeCards.bind(this));
+      html.find('select[name="eventAttach"]').change(this._onChangeEvent.bind(this));
     }
     html.find(".dialog-button").click(this._onClickButton.bind(this));
-    // Remove the enter key = submit so that enter can be used within text areas.
-    // $(document).on('keydown.chooseDefault', this._onKeyDown.bind(this));
     if ( this.data.render instanceof Function ) this.data.render(this.options.jQuery ? html : html[0]);
   }
 
@@ -43,6 +42,30 @@ export class DialogScope extends Dialog {
       const eventCards = form.find('select[name="eventAttach"]');
       for (const id in cMap) {
         eventCards.append(`<option value="${id}">${cMap[id]}</option>`);
+      }
+    }
+  }
+
+  /**
+   * When an event is selected for attachment, populate the event drop down with all existing
+   * scenes within that event.
+   * @param event
+   * @private
+   */
+  _onChangeEvent(event) {
+    event.preventDefault();
+    const form = $(event.target.form);
+    const periodCardId = form.find('select[name="periodAttach"]').find(':selected').val();
+    const eventCardId = form.find('select[name="eventAttach"]').find(':selected').val();
+    const periodCard = game.scope.period.findCard("id", periodCardId);
+    const eventCard = periodCard.children.findCard("id", eventCardId);
+    const children = eventCard.children;
+
+    const cMap = children.getCardsIdNamePair();
+    if ( !isEmpty(cMap) ) {
+      const sceneCards = form.find('select[name="sceneAttach"]');
+      for (const id in cMap) {
+        sceneCards.append(`<option value="${id}">${cMap[id]}</option>`);
       }
     }
   }

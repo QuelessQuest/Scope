@@ -266,6 +266,22 @@ Hooks.on("canvasReady", async () => {
         const sortedEvents = eventGroups[group].sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
         sortedEvents.forEach(note => game.scope.period.attach("event", note, period.id));
     }
+
+    // Rebuild the scenes, adding back connectors
+    let sceneNotes = notes.filter(n => n.getFlag("scope", "type") === "scene");
+    let sceneGroups = sceneNotes.reduce((r, a) => {
+        const eventNote = a.getFlag("scope", "eventNote");
+        r[eventNote] = [...r[eventNote] || [], a];
+        return r;
+    }, {});
+
+    for (const group in sceneGroups) {
+        let period = game.scope.period.findCard("noteId", sceneGroups[group][0].getFlag("scope", "periodNote"));
+        let eventList = period.children;
+        let event = eventList.findCard("noteId", group);
+        const sortedScenes = sceneGroups[group].sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
+        sortedScenes.forEach(note => eventList.attach("scene", note, event.id));
+    }
 });
 
 /**

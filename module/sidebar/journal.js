@@ -404,9 +404,9 @@ export class JournalDirectoryScope extends JournalDirectory {
             let insertAt = periodCard.children.getLast();
             if (insertAt) {
               ui.notifications.info("Period Attachment Requested without Event Entry Point set. Attaching to the End of the List")
-              eventY = insertAt.y + SCOPE.noteSettings.event.spacing.y;
+              eventY = insertAt.y + SCOPE.noteSettings.event.iconHeight + SCOPE.noteSettings.event.spacing.y;
             } else {
-              eventY = periodCard.y + (SCOPE.noteSettings.period.iconHeight / 2) + (SCOPE.noteSettings.event.iconHeight / 2) + 100;
+              eventY = periodCard.y + (SCOPE.noteSettings.period.iconHeight / 2) + (SCOPE.noteSettings.event.iconHeight / 2) + SCOPE.noteSettings.event.spacing.y;
             }
             insertNote(entityId, {x: eventX, y: eventY}).then(() => {
             });
@@ -425,9 +425,9 @@ export class JournalDirectoryScope extends JournalDirectory {
               let insertPoint = eventCard.children.getLast();
               if (insertPoint) {
                 ui.notifications.info("Event Attachment Requested without Scene Entry Point set. Attaching to the End of the List")
-                sceneX = insertPoint.x + SCOPE.noteSettings.scene.spacing.x;
+                sceneX = insertPoint.x + SCOPE.noteSettings.scene.iconWidth + SCOPE.noteSettings.scene.spacing.x;
               } else {
-                sceneX = eventCard.x + (SCOPE.noteSettings.event.iconWidth / 2) + (SCOPE.noteSettings.scene.iconWidth / 2) + 100;
+                sceneX = eventCard.x + (SCOPE.noteSettings.event.iconWidth / 2) + (SCOPE.noteSettings.scene.iconWidth / 2) + SCOPE.noteSettings.scene.spacing.x;
               }
               insertNote(entityId, {x: sceneX, y: sceneY}).then(() => {
               });
