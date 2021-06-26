@@ -262,9 +262,11 @@ Hooks.on("canvasReady", async () => {
   }, {});
 
   for (const group in eventGroups) {
-    let periodCard = game.scope.period.findCard("noteId", group);
+    let period = game.scope.period.findCard("noteId", group);
     const sortedEvents = eventGroups[group].sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
-    sortedEvents.forEach(note => game.scope.period.attach("event", note, periodCard));
+    for (const event of sortedEvents) {
+      await game.scope.period.attach("event", event, period.id);
+    }
   }
 
   // Rebuild the scenes, adding back connectors
@@ -274,27 +276,16 @@ Hooks.on("canvasReady", async () => {
     r[eventNote] = [...r[eventNote] || [], a];
     return r;
   }, {});
-  for (const group in sceneGroups) {
-
-  }
-
-  /*
-  let sceneNotes = notes.filter(n => n.getFlag("scope", "type") === "scene");
-  let sceneGroups = sceneNotes.reduce((r, a) => {
-      const eventNote = a.getFlag("scope", "eventNote");
-      r[eventNote] = [...r[eventNote] || [], a];
-      return r;
-  }, {});
 
   for (const group in sceneGroups) {
-      let period = game.scope.period.findCard("noteId", sceneGroups[group][0].getFlag("scope", "periodNote"));
-      let eventList = period.children;
-      let event = eventList.findCard("noteId", group);
-      const sortedScenes = sceneGroups[group].sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
-      sortedScenes.forEach(note => eventList.attach("scene", note, event.id));
+    let period = game.scope.period.findCard("noteId", sceneGroups[group][0].getFlag("scope", "periodNote"));
+    let eventList = period.children;
+    let event = eventList.findCard("noteId", group);
+    const sortedScenes = sceneGroups[group].sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
+    for (const scene of sortedScenes) {
+      await eventList.attach("scene", scene, event.id);
+    }
   }
-
-   */
 });
 
 /**
@@ -366,8 +357,8 @@ Hooks.on("createNote", async (noteDocument, options) => {
   let periodNoteId = "none";
   let eventNoteId = "none";
   let sceneNoteId = "none";
-  let periodCard = null;
-  let eventCard = null;
+  let periodCard;
+  let eventCard;
   if (periodAttach && periodAttach !== "none") {
     periodCard = game.scope.period.findCard("id", periodAttach);
     periodNoteId = periodCard.noteId;
@@ -386,16 +377,14 @@ Hooks.on("createNote", async (noteDocument, options) => {
       card = await game.scope.period.add(noteDocument);
       break;
     case "event":
-      card = await game.scope.period.attach(type, noteDocument, periodCard);
+      card = await game.scope.period.attach(type, noteDocument, periodAttach);
       periodNoteId = card.group;
       console.log(card);
       break;
     case "scene":
-      if (periodCard && eventCard) {
-        card = await periodCard.children.attach(type, noteDocument, eventCard);
-        eventNoteId = card.group;
-        periodNoteId = eventCard.group;
-      }
+      card = await periodCard.children.attach(type, noteDocument, eventAttach);
+      eventNoteId = card.group;
+      periodNoteId = eventCard.group;
       break;
     case "legacy":
       break;

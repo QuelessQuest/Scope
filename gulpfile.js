@@ -3,9 +3,6 @@ const gulp = require('gulp');
 const less = require('gulp-less');
 const zip = require('gulp-zip');
 const del = require('del');
-//const { readdirSync, statSync } = require('fs');
-//const { join } = require('path');
-
 
 const clean = () => del(['./styles/*.css']);
 const cleanMain = () => del(['./scope.css']);
@@ -19,18 +16,19 @@ function themeStyles() {
 }
 
 const themes = series(clean, themeStyles);
-//const dirs = p => readdirSync(p).filter(f => statSync(join(p, f)).isDirectory())
-//const themes = series(themeStyles);
-
 
 function stageRelease() {
   return src([
+    './assets/**',
+    './libs/**',
     './module/**/*.js',
     './lang/**/*.json',
     './styles/**/*.*',
     './templates/**/*.html',
     'system.json',
-    'template.json'
+    'template.json',
+    'scope.js',
+    'scope.css'
   ], {base: '.'})
       .pipe(dest('./stage/ms'));
 }
@@ -80,4 +78,3 @@ exports.css = css;
 exports.stage = stageTask;
 exports.zip = zipTask;
 exports.themes = themes;
-//exports.clean = clean;

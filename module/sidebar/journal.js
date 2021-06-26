@@ -275,7 +275,7 @@ export class JournalDirectoryScope extends JournalDirectory {
       const form = html[0].querySelector("form");
       const fd = new FormDataExtended(form);
       let fo = fd.toObject();
-      this._createJournalEntry("Palette", fo.tone, fo.folderId, fo, "palette")
+      this._createPalette("Palette", fo.tone, fo.folderId, fo, "palette")
     });
   }
 
@@ -352,6 +352,9 @@ export class JournalDirectoryScope extends JournalDirectory {
       content: content,
       name: name,
       folder: folderId,
+      permission: {
+        default: CONST.ENTITY_PERMISSIONS.OWNER
+      },
       flags: {
         scope: {
           type: type,
@@ -364,6 +367,42 @@ export class JournalDirectoryScope extends JournalDirectory {
     };
 
     return JournalEntry.create(createData, {renderSheet: false, cardType: type});
+  }
+
+  /**
+   *
+   * @param {string}  name
+   * @param {string}  tone
+   * @param {string}  folderId
+   * @param {{}}      fo
+   * @param {string}  type
+   * @returns {JournalEntry}
+   * @private
+   */
+  async _createPalette(name, tone, folderId, fo, type) {
+    let yl = fo.yes.split(/\r?\n/);
+    let nl = fo.no.split(/\r?\n/);
+
+    let fl = [];
+    let diff = yl.length - nl.length;
+    if (diff > 0) {
+      for (let i = 0; i < diff; i++)
+        nl.push("");
+    }
+    if (diff < 0) {
+      diff = Math.abs(diff);
+      for (let i = 0; i < diff; i++)
+        yl.push("");
+    }
+
+    for (let i = 0; i < yl.length; i++)
+      fl.push({yes: yl[i], no: nl[i]});
+
+    let data = {
+      items: fl
+    }
+    foundry.utils.mergeObject(fo, data);
+    return this._createJournalEntry(name, tone, folderId, fo, type);
   }
 
   /**
@@ -417,7 +456,6 @@ export class JournalDirectoryScope extends JournalDirectory {
           if (eventId && eventId !== "none") {
             if (sceneId !== "none") {
             } else {
-
               // No scene insertion point specified, attach to end of list
               const eventCard = pCard.children.findCard("id", eventId);
               const sceneY = eventCard.y;

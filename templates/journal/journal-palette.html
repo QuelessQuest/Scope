@@ -1,34 +1,18 @@
 <div class="scope">
     <table style="width:99.0017%;height:112px" border="1">
+        <thead>
+        <tr>
+            <th>Yes</th>
+            <th>No</th>
+        </tr>
+        </thead>
         <tbody>
+        {{~#each items as |item i|}}
         <tr style="height:16px">
-            <td style="width:46.1023%;height:16px">One</td>
-            <td style="width:53.0573%;height:16px">Two</td>
+            <td style="width:46.1023%;height:16px">{{item.yes}}</td>
+            <td style="width:53.0573%;height:16px">{{item.no}}</td>
         </tr>
-        <tr style="height:16px">
-            <td style="width:46.1023%;height:16px">The</td>
-            <td style="width:53.0573%;height:16px">Four</td>
-        </tr>
-        <tr style="height:16px">
-            <td style="width:46.1023%;height:16px"> </td>
-            <td style="width:53.0573%;height:16px"> </td>
-        </tr>
-        <tr style="height:16px">
-            <td style="width:46.1023%;height:16px"> </td>
-            <td style="width:53.0573%;height:16px"> </td>
-        </tr>
-        <tr style="height:16px">
-            <td style="width:46.1023%;height:16px"> </td>
-            <td style="width:53.0573%;height:16px"> </td>
-        </tr>
-        <tr style="height:16px">
-            <td style="width:46.1023%;height:16px"> </td>
-            <td style="width:53.0573%;height:16px"> </td>
-        </tr>
-        <tr style="height:16px">
-            <td style="width:46.1023%;height:16px"> </td>
-            <td style="width:53.0573%;height:16px"> </td>
-        </tr>
+        {{/each}}
         </tbody>
     </table>
 </div>
