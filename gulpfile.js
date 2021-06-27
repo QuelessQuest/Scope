@@ -4,7 +4,13 @@ const less = require('gulp-less');
 const zip = require('gulp-zip');
 const del = require('del');
 
-const clean = () => del(['./styles/*.css']);
+function clean() {
+  del(['./styles/*.css']);
+  return del(['stage/*']);
+}
+
+const cleanTask = series(clean);
+
 const cleanMain = () => del(['./scope.css']);
 
 function themeStyles() {
@@ -78,3 +84,4 @@ exports.css = css;
 exports.stage = stageTask;
 exports.zip = zipTask;
 exports.themes = themes;
+exports.clean = cleanTask;

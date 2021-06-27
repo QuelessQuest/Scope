@@ -9,8 +9,8 @@ export class CardList {
    * I'm sure there is a better way to do this. But this works for now.
    *
    * A double linked list of card types, including the lines that link them
-   * @param sortDirection {String}
-   * @param type {String}
+   * @param {string}  sortDirection
+   * @param {string}  type
    */
   constructor(sortDirection, type) {
     this.head = null;
@@ -36,7 +36,7 @@ export class CardList {
   /**
    * Add an element to the list, based on the items screen location
    * @param {NoteDocument}  note
-   * @param {boolean}       clearDrawing default true
+   * @param {Boolean}       clearDrawing default true
    * @returns {CardScope}
    */
   async add(note, clearDrawing = true) {
@@ -89,7 +89,6 @@ export class CardList {
           }
         }
         targetCard.next = card;
-        console.log("HERE");
       }
     } else {
       this.head = card;

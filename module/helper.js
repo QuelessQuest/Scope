@@ -62,6 +62,8 @@ export function getListPosition(size) {
  * @returns {Promise<void>}
  */
 export async function arrange() {
+  ui.notifications.warn("Arrange has yet to be updated. Currently broken");
+  /*
   if ( !game.scope.period.head ) return;
 
   game.scope.period.lockRefresh();
@@ -108,6 +110,8 @@ export async function arrange() {
   } catch (ex) {
     console.log("Attempted to delete a non-existent drawing. Just carry on.");
   }
+
+   */
 }
 
 export function getFromTheme(item) {
