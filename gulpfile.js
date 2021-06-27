@@ -5,7 +5,6 @@ const zip = require('gulp-zip');
 const del = require('del');
 
 function clean() {
-  del(['./styles/*.css']);
   return del(['stage/*']);
 }
 
@@ -29,21 +28,20 @@ function stageRelease() {
     './libs/**',
     './module/**/*.js',
     './lang/**/*.json',
-    './styles/**/*.*',
     './templates/**/*.html',
     'system.json',
     'template.json',
     'scope.js',
     'scope.css'
   ], {base: '.'})
-      .pipe(dest('./stage/ms'));
+      .pipe(dest('./stage/scope'));
 }
 
 const stageTask = series(stageRelease);
 
 function zipRelease() {
-  return src(['./stage/ms/**/*.*'])
-      .pipe(zip('ms.zip'))
+  return src(['./stage/scope/**/*.*'])
+      .pipe(zip('scope.zip'))
       .pipe(dest('stage'));
 }
 
@@ -52,8 +50,6 @@ const zipTask = series(zipRelease);
 /* ----------------------------------------- */
 /*  Compile LESS
 /* ----------------------------------------- */
-
-const SIMPLE_LESS = ["less/*.less"];
 
 function compileLESS() {
   return src("less/scope.less")
@@ -64,21 +60,11 @@ function compileLESS() {
 const css = series(cleanMain, compileLESS);
 
 /* ----------------------------------------- */
-
-/*  Watch Updates
-/* ----------------------------------------- */
-
-function watchUpdates() {
-  gulp.watch(SIMPLE_LESS, css);
-}
-
-/* ----------------------------------------- */
 /*  Export Tasks
 /* ----------------------------------------- */
 
 exports.default = series(
-    parallel(css),
-    watchUpdates
+    parallel(css)
 );
 exports.css = css;
 exports.stage = stageTask;
