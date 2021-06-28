@@ -36,7 +36,7 @@ export async function insertNote(id, {x, y}) {
     textAnchor: CONST.TEXT_ANCHOR_POINTS.CENTER
   });
 
-  if ( !canvas.grid.hitArea.contains(x, y) ) return false;
+  if (!canvas.grid.hitArea.contains(x, y)) return false;
 
   canvas.notes.activate();
   let scene = game.scenes.getName("scope");
@@ -60,12 +60,12 @@ export function getListPosition(size) {
   let mid = game.scenes.active.data.width / 2;
   let length;
   const spacing = SCOPE.noteSettings.period.iconWidth + game.settings.get("scope", "spacing");
-  if ( size > 1 ) {
+  if (size > 1) {
     length = spacing * size;
   } else {
     length = SCOPE.noteSettings.period.iconWidth;
   }
-  return {x: mid - (length / 2) + (spacing/2), y: game.settings.get("scope", "fromTop")}
+  return {x: mid - (length / 2) + (spacing / 2), y: game.settings.get("scope", "fromTop")}
 }
 
 /**
@@ -198,30 +198,57 @@ export function registerSettings() {
   });
 }
 
-export function droppedOn(scene, note, targetCard) {
-  let shiftIt = {};
-  // Is it on top of target
-  let targetNote = scene.getEmbeddedDocument("Note", targetCard.noteId);
-  if ( SCOPE.bump.hitTestRectangle(note, targetNote) ) {
-    const amount = (SCOPE.noteSettings[this.type].spacing[this.sortDirection]
-        - (card[this.sortDirection]
-            - targetCard[this.sortDirection]))
-        + (SCOPE.noteSettings[this.type].spacing[this.sortDirection]
-            + SCOPE.noteSettings.spacing);
-    shiftIt = {card: card, amount: amount};
+/**
+ *
+ * @param {ScopeDocument} note
+ * @returns {string}
+ */
+export function getDirection(note) {
+  switch (note.data.type) {
+    case "period":
+    case "scene":
+      return "x";
+    case "event":
+      return "y";
   }
-  // Is it on top of targets next
-  if ( targetCard.next ) {
-    let targetNextNote = scene.getEmbeddedDocument("Note", targetCard.next.noteId);
-    if ( SCOPE.bump.hitTestRectangle(note, targetNextNote) ) {
-      const amount = (SCOPE.noteSettings[this.type].spacing[this.sortDirection]
-          - (card[this.sortDirection]
-              - targetCard.next[this.sortDirection]))
-          + (SCOPE.noteSettings[this.type].spacing[this.sortDirection]
-              + SCOPE.noteSettings.spacing);
-      shiftIt = {card: targetCard.next, amount: amount};
+}
+
+/**
+ *
+ * @param {Scene}         scene
+ * @param {string}        type
+ * @param {string}        direction
+ * @param {ScopeDocument} note
+ * @param {ScopeDocument} noteToCheck
+ * @returns {{}|{noteToShift: ScopeDocument, order: number, amount: number}}
+ */
+export function droppedOn(scene, type, direction, note, noteToCheck) {
+
+  // Was the new note dropped on top of the note
+  if (SCOPE.bump.hitTestRectangle(note, noteToCheck)) {
+    return {
+      noteToShift: note,
+      order: 0,
+      amount: (SCOPE.noteSettings[type].spacing - (note.data[direction] - noteToCheck.data[direction]))
+        + (SCOPE.noteSettings[type].spacing + SCOPE.noteSettings.spacing)
+    };
+  }
+
+  // Was the new note dropped on top of the next note
+  if (noteToCheck.data.next) {
+    if (SCOPE.bump.hitTestRectangle(note, noteToCheck.data.next)) {
+      return {
+        noteToShift: noteToCheck.data.next,
+        order: 1,
+        amount: (SCOPE.noteSettings[type].spacing - (note.data[direction] - noteToCheck.data.next[direction]))
+          + (SCOPE.noteSettings[this.type].spacing[this.sortDirection] + SCOPE.noteSettings.spacing)
+      };
     }
   }
 
-  return shiftIt;
+  return {};
+}
+
+export function sortNotes(notesToSort) {
+  return notesToSort.sort((a, b) => a.data.order - b.data.order);
 }

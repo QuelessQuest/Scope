@@ -44,29 +44,20 @@ SCOPE.noteSettings = {
         type: "period",
         iconWidth: 360,
         iconHeight: 160,
-        spacing: {
-            x: 180,
-            y: 0
-        }
+        spacing: 180
     },
     event: {
         type: "event",
         iconWidth: 250,
         iconHeight: 200,
-        spacing: {
-            x: 0,
-            y: 300
-        }
+        spacing: 300
     },
     scene: {
         type: "scene",
         iconWidth: 160,
         iconHeight: 160,
-        spacing: {
-            x: 100,
-            y: 0
-        }
-    },
+        spacing: 100
+    }
 }
 
 SCOPE.icons = {
@@ -95,6 +86,7 @@ SCOPE.connectors = {
 SCOPE.legacies = ["Not Yet Defined", "Not Yet Defined", "Not Yet Defined", "Not Yet Defined", "Not Yet Defined"];
 
 SCOPE.namespace = {
+    locked: false,
     focus: {
         id: "",
         text: ""

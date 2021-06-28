@@ -2,11 +2,14 @@ import {SCOPE} from "./module/config.js";
 import {JournalDirectoryScope} from './module/sidebar/journal.js';
 import {JournalSheetScope} from "./module/journal/journal-sheet.js";
 import {CardList} from "./module/cards.js";
-import {registerSettings} from "./module/helper.js";
+import {getDirection, registerSettings, sortNotes} from "./module/helper.js";
 import {getFromTheme} from "./module/helper.js";
 import {insertNote} from "./module/helper.js";
 import {patchCore} from "./module/patch.js";
 import {ScopeDocument} from "./module/scope-classes.js";
+import {addNote} from "./module/notes.js";
+import {addNoteTo} from "./module/notes.js";
+import {deleteNote} from "./module/notes.js";
 import {updateConnectors} from "./module/notes.js";
 
 /**
@@ -64,8 +67,8 @@ async function _prepareScene() {
     SCOPE.scenePrepared = true;
     await _prepareSceneText(scene);
   } else {
-    let x = await Scene.create(SCOPE.scene);
-    await Scene.updateDocuments([{_id: x._id, active: true, img: "systems/scope/assets/themes/whitespace/background.jpg"}]);
+    let scene = await Scene.create(SCOPE.scene);
+    await Scene.updateDocuments([{_id: scene._id, active: true, img: "systems/scope/assets/themes/whitespace/background.jpg"}]);
   }
 }
 
@@ -128,7 +131,7 @@ async function _prepareSceneText(scene) {
  * @param {Scene}   scene
  * @param {string}  type  The request drawing type (focus, focusLabel, etc)
  * @param {string}  text  Optional. Provide the text to create for Legacies
- * @param {Number}  sequence  Optional. The order in which this appears in a list
+ * @param {number}  sequence  Optional. The order in which this appears in a list
  * @returns {Promise<*[]>}
  * @private
  */
@@ -232,31 +235,28 @@ Hooks.on("canvasReady", async () => {
   // Initialize the collision detection. Used to determine if cards overlap
   SCOPE.bump = new Bump(PIXI);
 
-  let scene = game.scenes.getName("scope");
+ // let scene = game.scenes.getName("scope");
 
   // Remove any existing connectors from the scene
-  let drawings = scene.getEmbeddedCollection("Drawing");
-  let drawingsToClear = [...drawings].filter(d => d.getFlag("scope", "type") === "connector").map(d => d.data._id);
-  if (drawingsToClear.length > 0)
-    try {
-      await scene.deleteEmbeddedDocuments("Drawing", drawingsToClear);
-    } catch (ex) {
-      console.log("Attempted to delete a non-existent drawing. Just carry on.");
-    }
+//  let drawings = scene.getEmbeddedCollection("Drawing");
+ // let drawingsToClear = [...drawings].filter(d => d.getFlag("scope", "type") === "connector").map(d => d.data._id);
+ // if (drawingsToClear.length)
+ //   await scene.deleteEmbeddedDocuments("Drawing", drawingsToClear);
 
-  let notes = scene.getEmbeddedCollection("Note");
+ // let notes = scene.getEmbeddedCollection("Note");
 
   // Rebuild the period list, adding back connectors
-  let periodNotes = notes.filter(n => n.getFlag("scope", "type") === "period");
+  //let periodNotes = notes.filter(n => n.data.type === "period");
 
   // Order of notes is not saved in the data naturally, we must recreate the periods in order so what is displayed
   // on screen matches what is stored in game.scope.period
-  const sortedPeriods = periodNotes.sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
-  for (const period of sortedPeriods) {
-    await game.scope.period.add(period);
-  }
+  //const sortedPeriods = sortNotes(periodNotes)
+  //for (const period of sortedPeriods) {
+   // await addNote(scene, period, sortedPeriods);
+  //}
 
   // Rebuild the events, adding back connectors
+  /*
   let eventNotes = notes.filter(n => n.getFlag("scope", "type") === "event");
   let eventGroups = eventNotes.reduce((r, a) => {
     const periodNote = a.getFlag("scope", "periodNote");
@@ -289,6 +289,8 @@ Hooks.on("canvasReady", async () => {
       await eventList.attach("scene", scene, event.id);
     }
   }
+
+   */
 });
 
 /**
@@ -303,8 +305,6 @@ Hooks.on("dropCanvasData", (canvas, data) => {
   const type = game.journal.get(data.id).getFlag("scope", "type");
   switch (type) {
     case "period":
-      insertNote(data.id, {x: data.x, y: data.y});
-      break;
     case "event":
       insertNote(data.id, {x: data.x, y: data.y});
       break;
@@ -321,7 +321,8 @@ Hooks.on("dropCanvasData", (canvas, data) => {
  * Rerender the connectors when the note is moved.
  */
 Hooks.on("updateNote", async (entity, note, options, userid) => {
-  await updateConnectors(note);
+  if (!game.scope.locked)
+    await updateConnectors(note);
 });
 
 /**
@@ -352,10 +353,7 @@ Hooks.on("createNote", async (noteDocument, options) => {
   const attachToPeriod = journalEntry.getFlag("scope", "attachToPeriod");
   const attachToEvent = journalEntry.getFlag("scope", "attachToEvent");
   const attachToScene = journalEntry.getFlag("scope", "attachToScene");
-  let periodNoteId = "none";
-  let eventNoteId = "none";
-  let sceneNoteId = "none";
-  let periodNote;
+  let periodNote = null;
   let eventNote;
   let sceneNote;
   if (attachToPeriod && attachToPeriod !== "none") {
@@ -368,78 +366,49 @@ Hooks.on("createNote", async (noteDocument, options) => {
     }
   }
 
-  let card;
-  switch (type) {
-    case "period":
-      let periodNotes = scene.getEmbeddedCollection("Note")
-        .filter(note => note.data.type === "period");
-      card = await game.scope.period.add(noteDocument);
-      break;
-    case "event":
-      card = await game.scope.period.attach(type, noteDocument, attachToPeriod);
-      periodNoteId = card.group;
-      console.log(card);
-      break;
-    case "scene":
-      card = await periodCard.children.attach(type, noteDocument, attachToEvent);
-      eventNoteId = card.group;
-      periodNoteId = eventCard.group;
-      break;
-    case "legacy":
-      break;
-  }
-
-  let flagData = SCOPE.noteSettings[type];
-  let flagTypeData = {
-    tone: tone,
-    labelBorderColor: getFromTheme(`${type}-label-stroke-color`),
-    noteBorderColor: getFromTheme("border-color"),
-    periodNote: periodNoteId,
-    eventNote: eventNoteId,
-    sceneNote: sceneNoteId,
-    order: card.order
-  }
-  flagData = foundry.utils.mergeObject(flagData, flagTypeData);
-  const flags = {
-    scope: flagData
-  }
-
   let typeData = {
-    _id: noteDocument.data._id,
     text: journalEntry.data.name,
+    type: type,
+    tone: tone,
     icon: SCOPE.icons[type],
     iconSize: SCOPE.noteSettings[type].iconWidth,
     iconTint: getFromTheme(`${type}-icon-color`),
     fontSize: getFromTheme(`${type}-label-size`),
     textColor: getFromTheme(`${type}-label-color`),
-    flags: flags
+    labelBorderColor: getFromTheme(`${type}-label-stroke-color`),
+    noteBorderColor: getFromTheme("border-color"),
   }
 
-  game.scope.period.lockRefresh();
-  await scene.updateEmbeddedDocuments("Note", [typeData]);
-  game.scope.period.unlockRefresh();
-
+  switch (type) {
+    case "period":
+      if (periodNote) await addNoteTo(scene, noteDocument, periodNote, getDirection(noteDocument), typeData);
+      else {
+        let periodNotes = scene.getEmbeddedCollection("Note").filter(note => note.data.type === "period");
+        await addNote(scene, noteDocument, sortNotes(periodNotes), typeData);
+      }
+      break;
+    case "event":
+      //card = await game.scope.period.attach(type, noteDocument, attachToPeriod);
+      //periodNoteId = card.group;
+      //console.log(card);
+      break;
+    case "scene":
+      //card = await periodCard.children.attach(type, noteDocument, attachToEvent);
+      //eventNoteId = card.group;
+      //periodNoteId = eventCard.group;
+      break;
+    case "legacy":
+      break;
+  }
 });
-
 
 /**
  * If a note is deleted, remove it from the appropriate list and remove
  * any associated drawings.
  */
 Hooks.on("deleteNote", async (noteDocument, options, userId) => {
-  await _deleteNote(noteDocument.data._id);
+  await deleteNote(noteDocument);
 });
-
-/**
- *
- * @param {string}  noteId
- * @private
- */
-async function _deleteNote(noteId) {
-  console.log("Deleting Note with id: " + noteId);
-  let scene = game.scenes.getName("scope");
-  await game.scope.period.remove(noteId);
-}
 
 /**
  * JOURNAL HANDLING ===========================================================
@@ -451,5 +420,5 @@ async function _deleteNote(noteId) {
 Hooks.on("deleteJournalEntry", async (entity, options, userId) => {
   let note = entity.sceneNote;
   if (!note) return;
-  await _deleteNote(note.id);
+  await deleteNote(note);
 });

@@ -102,6 +102,7 @@ export class ScopeData extends foundry.abstract.DocumentData {
     return {
       _id: DOCUMENT_ID,
       type: REQUIRED_STRING,
+      tone: STRING_FIELD,
       next: foreignDocumentField({type: BaseScope, required: false}),
       prev: foreignDocumentField({type: BaseScope, required: false}),
       connectors: {
@@ -120,6 +121,8 @@ export class ScopeData extends foundry.abstract.DocumentData {
         validate: n => Number.isInteger(n) && n >= 32,
         validationError: "Invalid {name} {field} which must be an integer greater than 32"
       }),
+      iconWidth: Number,
+      iconHeight: Number,
       iconTint: COLOR_FIELD,
       text: STRING_FIELD,
       fontFamily: field(REQUIRED_STRING, {
