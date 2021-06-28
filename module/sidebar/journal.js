@@ -81,12 +81,15 @@ export class JournalDirectoryScope extends JournalDirectory {
   _getDialogData(type, data) {
 
     let scene = game.scenes.getName("scope");
-    let periodPairs = scene.getEmbeddedCollection("Note")
-      .filter(note => note.data.getFlag("scope", "type") === "period")
-      .map(note => {
-        let notePair = {};
-        notePair[note.data._id] = note.data.text
-      });
+    let periods = scene.getEmbeddedCollection("Note")
+      .filter(note => note.data.type === "period");
+
+    let periodPairs = {none: "--"};
+    for (const period of periods) {
+      let thisPeriod = {};
+      thisPeriod[period.data._id] = period.data.text;
+      foundry.utils.mergeObject(periodPairs, thisPeriod);
+    }
 
     let typeName = "";
     let attachCard = "";

@@ -187,6 +187,7 @@ async function _createText(scene, type, text = "", sequence = 0) {
  * @private
  */
 async function _prepareFolders() {
+  console.log("Preparing Folders");
   const folder = game.i18n.localize("SCOPE.JournalFolder");
   let journalFolders = game.folders.filter(f => f.type === "JournalEntry");
   await _createFolder(journalFolders, folder, "period");
@@ -313,8 +314,6 @@ Hooks.on("dropCanvasData", (canvas, data) => {
     case "legacy":
       break;
   }
-
-  return false;
 });
 
 /**
@@ -377,6 +376,7 @@ Hooks.on("createNote", async (noteDocument, options) => {
     textColor: getFromTheme(`${type}-label-color`),
     labelBorderColor: getFromTheme(`${type}-label-stroke-color`),
     noteBorderColor: getFromTheme("border-color"),
+    order: -1
   }
 
   switch (type) {
@@ -407,7 +407,7 @@ Hooks.on("createNote", async (noteDocument, options) => {
  * any associated drawings.
  */
 Hooks.on("deleteNote", async (noteDocument, options, userId) => {
-  await deleteNote(noteDocument);
+  await deleteNote(game.scenes.getName("scope"), noteDocument);
 });
 
 /**
@@ -420,5 +420,5 @@ Hooks.on("deleteNote", async (noteDocument, options, userId) => {
 Hooks.on("deleteJournalEntry", async (entity, options, userId) => {
   let note = entity.sceneNote;
   if (!note) return;
-  await deleteNote(note);
+  await deleteNote(game.scenes.getName("scope"), note);
 });

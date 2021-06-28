@@ -7,6 +7,9 @@ import {getDirection} from "./helper.js";
 import {sortNotes} from "./helper.js";
 
 /**
+ * Add a note to another note. Update as necessary if added between two existing notes.
+ * Will shift notes about if it detects a note was dropped on another note.
+ * Connectors will be updated accordingly.
  *
  * @param {Scene}         scene
  * @param {ScopeDocument} note
@@ -50,19 +53,25 @@ export async function addNoteTo(scene, note, attachTo, direction, typeData) {
     await updateConnectors(sortNotes(shiftedNotes));
   }
 }
+
 /**
+ * Add a note to scope. It will be placed in the proper location and have order and connectors updated.
  *
  * @param {Scene}           scene
  * @param {ScopeDocument}   note
  * @param {ScopeDocument[]} sortedNotes
+ * @param {{text: string, type: string, tone: string, icon: string, iconSize: number, iconTint: string, fontSize: number, textColor: string, labelBorderColor: string, noteBorderColor: string}}  typeData
  */
 export async function addNote(scene, note, sortedNotes, typeData) {
-  // First of its kind!
-  if (!sortedNotes) {
-    return scene.updateEmbeddedDocuments("Note", [{_id: note.data._id, order: 0}]);
-  }
-
   game.scope.locked = true;
+
+  // First of its kind!
+  if (sortedNotes.length === 0) {
+    let x = foundry.utils.mergeObject(typeData, {_id: note.data._id, order: 0});
+    await scene.updateEmbeddedDocuments("Note", [x]);
+    game.scope.locked = false;
+    return;
+  }
 
   let direction = getDirection(note);
   let coord = note.data[direction];
@@ -74,17 +83,70 @@ export async function addNote(scene, note, sortedNotes, typeData) {
 }
 
 /**
+ * Retrieve all the notes from this note to the end of the notes
  *
+ * @param {Scene}         scene
  * @param {ScopeDocument} note
- * @returns {Promise<void>}
+ * @returns {ScopeDocument[]}
  */
-export async function deleteNote(note) {
-  // TODO
-  // Remove any connectors for this note. Then recreate connector and reorder notes
-
+function getNotesFrom(scene, note) {
+  let notes = [];
+  notes.push(note);
+  if (note.next) {
+    notes.concat(getNotesFrom(scene, note.next));
+  }
+  return notes;
 }
 
 /**
+ * Remove a note. This will remove and rebuild connectors as necessary and update the order
+ * of the notes to reflect the removal of a note.
+ *
+ * @param {Scene}         scene
+ * @param {ScopeDocument} note
+ * @returns {Promise<void>}
+ */
+export async function deleteNote(scene, note) {
+
+  let connectorsToUpdate = [];
+  let notesToUpdate = [];
+
+  if (note.data.next) {
+
+    connectorsToUpdate.push(note.data.next);
+    notesToUpdate.push({
+      id: note.data.next.data._id,
+      previous: note.data.next,
+      order: note.data.next.order - 1
+    });
+
+    for (const n of getNotesFrom(scene, note.data.next)) {
+      notesToUpdate.push({
+        id: n.data._id,
+        order: n.data.order - 1
+      })
+    }
+  }
+
+  if (note.data.previous) {
+    connectorsToUpdate.push(note.data.previous);
+    notesToUpdate.push({
+      id: note.data.previous.data._id,
+      next: note.data.next
+    });
+  }
+
+  game.scope.locked = true;
+  if (connectorsToUpdate)
+    await updateConnectors(connectorsToUpdate);
+  if (notesToUpdate)
+    await scene.updateEmbeddedDocuments("Note", notesToUpdate);
+
+  game.scope.locked = false;
+}
+
+/**
+ * Shift all notes on the canvas from this note to the end of the notes.
  *
  * @param {ScopeDocument} noteToShift
  * @param {number}        order
@@ -112,13 +174,15 @@ async function _shiftNotesFrom({noteToShift: noteToShift, order: order, amount: 
     currentNote = currentNote.data.next;
   } while (currentNote);
 
-  if (notesToUpdate)
+  if (notesToUpdate.length > 0)
     return await scene.updateEmbeddedDocuments("Note", notesToUpdate);
 
   return [];
 }
 
 /**
+ * Locates the note after which a note can be added. The note is located via the x or y direction
+ * compared to the provided value.
  *
  * @param {number}          value
  * @param {string}          direction
@@ -139,6 +203,8 @@ function _findNoteToAttachTo(value, direction, list) {
 }
 
 /**
+ * For the provided notes, delete all exiting connectors and create new based on current positions
+ *
  * @param {ScopeDocument[]} notes
  * @returns {ScopeDocument[]}
  */
@@ -149,22 +215,7 @@ export async function updateConnectors(notes) {
   // TODO - Move Attached, if set
 
   // Remove existing connectors
-  let drawingIds = [];
-  for (const note of notes) {
-    if (note.data.connectors) {
-      if (note.data.connectors.previousHorizontal)
-        drawingIds.push(note.data.connectors.previousHorizontal.data._id);
-      if (note.data.connectors.nextHorizontal)
-        drawingIds.push(note.data.connectors.nextHorizontal.data._id);
-      if (note.data.connectors.previousVertical)
-        drawingIds.push(note.data.connectors.previousVertical.data._id);
-      if (note.data.connectors.nextVertical)
-        drawingIds.push(note.data.connectors.nextVertical.data._id);
-    }
-  }
-
-  if (drawingIds)
-    await scene.deleteEmbeddedDocuments("Drawing", drawingIds);
+  await removeConnectors(scene, notes);
 
   // Recreate connectors based on the new positions
   let updateNotes = [];
@@ -189,6 +240,33 @@ export async function updateConnectors(notes) {
 }
 
 /**
+ * For the provided notes, remove the associated connector drawings
+ *
+ * @param {Scene}           scene
+ * @param {ScopeDocument[]} notes
+ * @returns {Promise<void>}
+ */
+async function removeConnectors(scene, notes) {
+  let drawingIds = [];
+  for (const note of notes) {
+    if (note.data.connectors) {
+      if (note.data.connectors.previousHorizontal)
+        drawingIds.push(note.data.connectors.previousHorizontal.data._id);
+      if (note.data.connectors.nextHorizontal)
+        drawingIds.push(note.data.connectors.nextHorizontal.data._id);
+      if (note.data.connectors.previousVertical)
+        drawingIds.push(note.data.connectors.previousVertical.data._id);
+      if (note.data.connectors.nextVertical)
+        drawingIds.push(note.data.connectors.nextVertical.data._id);
+    }
+  }
+
+  if (drawingIds)
+    await scene.deleteEmbeddedDocuments("Drawing", drawingIds);
+}
+
+/**
+ * Create a connector drawing between two notes
  *
  * @param {Scene}         scene
  * @param {ScopeDocument} noteOne
@@ -209,11 +287,9 @@ async function _createConnection(scene, noteOne, noteTwo) {
     width: cardTwo.data.x - cardOne.data.x,
     height: Math.abs(cardTwo.data.y - cardOne.data.y),
     strokeColor: getFromTheme("period-link-color"),
-    flags: {
-
-    }
   }
 
   foundry.utils.mergeObject(options, dynamicOptions);
-  return DrawingDocument.create(options, {parent: canvas.scene});
+  return scene.createEmbeddedDocuments("Drawing", [options]);
+  //return DrawingDocument.create(options, {parent: canvas.scene});
 }

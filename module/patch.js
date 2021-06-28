@@ -8,6 +8,36 @@ import {ScopeControlIcon} from "./scope-classes.js";
  */
 export function patchCore() {
 
+  NotesLayer.prototype._onDropData = async function (event, data) {
+    // Acquire Journal entry
+    const entry = await JournalEntry.fromDropData(data);
+
+    // Get the world-transformed drop position
+    let t = this.worldTransform;
+    const tx = (event.clientX - t.tx) / canvas.stage.scale.x;
+    const ty = (event.clientY - t.ty) / canvas.stage.scale.y;
+    const [x, y] = canvas.grid.getCenter(tx, ty);
+    if ( !canvas.grid.hitArea.contains(x, y) ) return false;
+    const noteData = {entryId: entry.data._id, x: x, y: y}
+
+    // Create a NoteConfig sheet instance to finalize the creation
+    const cls = getDocumentClass("Note")
+    const document = new cls(noteData, {parent: canvas.scene});
+    if ( !document.canUserModify(game.user, "create" ) ) {
+      return ui.notifications.warn(game.i18n.format("NOTE.WarningNoCreate", {name: entry.name}));
+    }
+
+    // Create the preview object to complete creation
+    const object = new Note(document);
+    this.activate();
+    this.preview.addChild(object);
+    //await object.draw();
+    //object.sheet.render(true, {
+     // top: event.clientY - 20,
+      //left: event.clientX + 40
+    //});
+  }
+
   Note.prototype.refresh = function () {
     this.position.set(this.data.x, this.data.y);
     this.controlIcon.border.visible = this._hover;

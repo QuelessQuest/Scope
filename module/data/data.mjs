@@ -101,7 +101,7 @@ export class ScopeData extends foundry.abstract.DocumentData {
   static defineSchema() {
     return {
       _id: DOCUMENT_ID,
-      type: REQUIRED_STRING,
+      type: STRING_FIELD,
       tone: STRING_FIELD,
       next: foreignDocumentField({type: BaseScope, required: false}),
       prev: foreignDocumentField({type: BaseScope, required: false}),
