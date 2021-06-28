@@ -1,4 +1,5 @@
 import {SCOPE} from "./config.js";
+import {ScopeData} from "./data/data.mjs";
 
 /**
  * Return true if the object is empty, false otherwise
@@ -11,13 +12,23 @@ export function isEmpty(thing) {
 
 /**
  *
+ * @param {ScopeDocument} note
+ * @param {string} type
+ * @returns {{x: *, y: *}}
+ */
+export function getSpacedPoint(note, type) {
+  return {x: note.data.x + SCOPE.noteSettings[type].spacing.x, y: note.data.y + SCOPE.noteSettings[type].spacing.y};
+}
+
+/**
+ *
  * @param {string}  id
  * @param {number}  x
  * @param {number}  y
- * @returns {Promise<abstract.Document[]|boolean>}
+ * @returns {Document[]}
  */
 export async function insertNote(id, {x, y}) {
-  const noteData = new foundry.data.NoteData({
+  const noteData = new ScopeData({
     entryId: id,
     x: x,
     y: y,

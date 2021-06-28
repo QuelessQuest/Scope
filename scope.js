@@ -6,6 +6,8 @@ import {registerSettings} from "./module/helper.js";
 import {getFromTheme} from "./module/helper.js";
 import {insertNote} from "./module/helper.js";
 import {patchCore} from "./module/patch.js";
+import {ScopeDocument} from "./module/scope-classes.js";
+import {updateConnectors} from "./module/notes.js";
 
 /**
  * Sets up the environment and manages the hooks.
@@ -20,6 +22,7 @@ Hooks.once("init", function () {
   CONFIG.scope = SCOPE;
   CONFIG.ui.journal = JournalDirectoryScope;
   CONFIG["JournalEntry"]["sheetClass"] = JournalSheetScope;
+  CONFIG["Note"]["documentClass"] = ScopeDocument;
   game.scope = SCOPE.namespace;
   game.scope.period = new CardList(SCOPE.sortDirection.horizontal, "period");
 
@@ -317,14 +320,8 @@ Hooks.on("dropCanvasData", (canvas, data) => {
 /**
  * Rerender the connectors when the note is moved.
  */
-Hooks.on("updateNote", async (entity, d, options, userid) => {
-  const noteId = d._id;
-  if (!game.scope.period.canRefresh) return;
-  if (isNaN(d.x) || isNaN(d.y)) {
-    console.log("Got a NaN");
-    return;
-  }
-  await game.scope.period.updateCard(noteId, {x: d.x, y: d.y});
+Hooks.on("updateNote", async (entity, note, options, userid) => {
+  await updateConnectors(note);
 });
 
 /**
@@ -348,25 +345,25 @@ Hooks.on("createNote", async (noteDocument, options) => {
     enumerable: true, configurable: true
   });
 
-  const entry = game.journal.get(noteDocument.data.entryId);
-  const tone = entry.getFlag("scope", "tone");
-  const type = entry.getFlag("scope", "type");
-  const periodAttach = entry.getFlag("scope", "periodAttach");
-  const eventAttach = entry.getFlag("scope", "eventAttach");
-  const sceneAttach = entry.getFlag("scope", "sceneAttach");
+  //const notes = scene.getEmbeddedCollection("Note");
+  const journalEntry = game.journal.get(noteDocument.data.entryId);
+  const tone = journalEntry.getFlag("scope", "tone");
+  const type = journalEntry.getFlag("scope", "type");
+  const attachToPeriod = journalEntry.getFlag("scope", "attachToPeriod");
+  const attachToEvent = journalEntry.getFlag("scope", "attachToEvent");
+  const attachToScene = journalEntry.getFlag("scope", "attachToScene");
   let periodNoteId = "none";
   let eventNoteId = "none";
   let sceneNoteId = "none";
-  let periodCard;
-  let eventCard;
-  if (periodAttach && periodAttach !== "none") {
-    periodCard = game.scope.period.findCard("id", periodAttach);
-    periodNoteId = periodCard.noteId;
-    if (eventAttach && eventAttach !== "none") {
-      eventCard = periodCard.children.findCard("id", eventAttach);
-      eventNoteId = eventCard.noteId;
-      if (sceneAttach && sceneAttach !== "none") {
-        sceneNoteId = eventCard.children.findCard("id", sceneAttach).noteId;
+  let periodNote;
+  let eventNote;
+  let sceneNote;
+  if (attachToPeriod && attachToPeriod !== "none") {
+    periodNote = scene.getEmbeddedDocument("Note", attachToPeriod);
+    if (attachToEvent && attachToEvent !== "none") {
+      eventNote = scene.getEmbeddedDocument("Note", attachToEvent);
+      if (attachToScene && attachToScene !== "none") {
+        sceneNote = scene.getEmbeddedDocument("Note", attachToScene);
       }
     }
   }
@@ -374,15 +371,17 @@ Hooks.on("createNote", async (noteDocument, options) => {
   let card;
   switch (type) {
     case "period":
+      let periodNotes = scene.getEmbeddedCollection("Note")
+        .filter(note => note.data.type === "period");
       card = await game.scope.period.add(noteDocument);
       break;
     case "event":
-      card = await game.scope.period.attach(type, noteDocument, periodAttach);
+      card = await game.scope.period.attach(type, noteDocument, attachToPeriod);
       periodNoteId = card.group;
       console.log(card);
       break;
     case "scene":
-      card = await periodCard.children.attach(type, noteDocument, eventAttach);
+      card = await periodCard.children.attach(type, noteDocument, attachToEvent);
       eventNoteId = card.group;
       periodNoteId = eventCard.group;
       break;
@@ -407,7 +406,7 @@ Hooks.on("createNote", async (noteDocument, options) => {
 
   let typeData = {
     _id: noteDocument.data._id,
-    text: entry.data.name,
+    text: journalEntry.data.name,
     icon: SCOPE.icons[type],
     iconSize: SCOPE.noteSettings[type].iconWidth,
     iconTint: getFromTheme(`${type}-icon-color`),

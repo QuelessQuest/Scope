@@ -20,7 +20,7 @@
             <label>{{localize "SCOPE.Attach"}} {{attachCard}}</label>
             <p class="notes">{{localize "SCOPE.Optional"}}</p>
         </div>
-        <select class="scope select period" name="periodAttach">
+        <select class="scope select period" name="attachToPeriod">
             {{selectOptions periodCards selected=cardSelected localize=false}}
         </select>
     </div>
@@ -30,7 +30,7 @@
             <label>{{localize "SCOPE.InsertAfter"}} {{attachSubCard}}</label>
             <p class="notes">{{localize "SCOPE.Optional"}}</p>
         </div>
-        <select class="scope select event" name="eventAttach">
+        <select class="scope select event" name="attachToEvent">
             {{selectOptions eventCards selected=subCardSelected localize=false}}
         </select>
     </div>

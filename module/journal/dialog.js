@@ -19,8 +19,8 @@ export class DialogScope extends Dialog {
 
   activateListeners(html) {
     if ( this.options.onChange ) {
-      html.find('select[name="periodAttach"]').change(this._onChangeCards.bind(this));
-      html.find('select[name="eventAttach"]').change(this._onChangeEvent.bind(this));
+      html.find('select[name="attachToPeriod"]').change(this._onChangeCards.bind(this));
+      html.find('select[name="attachToEvent"]').change(this._onChangeEvent.bind(this));
     }
     html.find(".dialog-button").click(this._onClickButton.bind(this));
     if ( this.data.render instanceof Function ) this.data.render(this.options.jQuery ? html : html[0]);
@@ -35,11 +35,11 @@ export class DialogScope extends Dialog {
   _onChangeCards(event) {
     event.preventDefault();
     const form = $(event.target.form);
-    const periodCardId = form.find('select[name="periodAttach"]').find(':selected').val();
+    const periodCardId = form.find('select[name="attachToPeriod"]').find(':selected').val();
     const children = game.scope.period.findCard("id", periodCardId).children;
     const cMap = children.getCardsIdNamePair();
     if ( !isEmpty(cMap) ) {
-      const eventCards = form.find('select[name="eventAttach"]');
+      const eventCards = form.find('select[name="attachToEvent"]');
       for (const id in cMap) {
         eventCards.append(`<option value="${id}">${cMap[id]}</option>`);
       }
@@ -55,15 +55,15 @@ export class DialogScope extends Dialog {
   _onChangeEvent(event) {
     event.preventDefault();
     const form = $(event.target.form);
-    const periodCardId = form.find('select[name="periodAttach"]').find(':selected').val();
-    const eventCardId = form.find('select[name="eventAttach"]').find(':selected').val();
+    const periodCardId = form.find('select[name="attachToPeriod"]').find(':selected').val();
+    const eventCardId = form.find('select[name="attachToEvent"]').find(':selected').val();
     const periodCard = game.scope.period.findCard("id", periodCardId);
     const eventCard = periodCard.children.findCard("id", eventCardId);
     const children = eventCard.children;
 
     const cMap = children.getCardsIdNamePair();
     if ( !isEmpty(cMap) ) {
-      const sceneCards = form.find('select[name="sceneAttach"]');
+      const sceneCards = form.find('select[name="attachToScene"]');
       for (const id in cMap) {
         sceneCards.append(`<option value="${id}">${cMap[id]}</option>`);
       }

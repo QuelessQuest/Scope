@@ -1,4 +1,5 @@
 import {SCOPE} from "./config.js";
+import {ScopeData} from "./data/data.mjs";
 
 /**
  * Class that hold all card information at a game level.
@@ -140,5 +141,58 @@ export class ScopeControlIcon extends PIXI.Container {
 
   _onHoverOut(event) {
     this.border.visible = false;
+  }
+}
+
+export class BaseScope extends foundry.abstract.Document {
+  /** @inheritDoc */
+  static get schema() {
+    return ScopeData;
+  }
+
+  /** @inheritDoc */
+  static get metadata() {
+    return foundry.utils.mergeObject(super.metadata, {
+      name: "Note",
+      collection: "notes",
+      label: "something",
+      isEmbedded: true,
+      permissions: {
+        create: "NOTE_CREATE"
+      }
+    });
+  };
+
+  /** @inheritdoc */
+  testUserPermission(user, permission, {exact=false}={}) {
+    if ( user.isGM ) return true;                   // Game-masters always have control
+    if ( !this.data.entryId ) return true;          // Players can create un-linked notes
+    if ( !this.entry ) return false;                // Otherwise permission comes through the JournalEntry
+    return this.entry.testUserPermission(user, permission, exact);
+  }
+}
+
+export class ScopeDocument extends CanvasDocumentMixin(BaseScope) {
+
+  /* -------------------------------------------- */
+  /*  Properties                                  */
+  /* -------------------------------------------- */
+
+  /**
+   * The associated JournalEntry which is referenced by this Note
+   * @type {JournalEntry}
+   */
+  get entry() {
+    return game.journal.get(this.data.entryId);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * The text label used to annotate this Note
+   * @type {string}
+   */
+  get label() {
+    return this.data.text || this.entry?.name || "Unknown";
   }
 }

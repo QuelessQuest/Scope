@@ -109,6 +109,5 @@ export function patchCore() {
       point = next;
       cp0 = next_cp0;
     }
-
   }
 }
