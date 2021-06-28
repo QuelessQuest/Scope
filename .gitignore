@@ -6,4 +6,7 @@ abstract/
 data/
 utils/
 foundry.js
-*.mjs
+constants.mjs
+documents.mjs
+module.mjs
+
