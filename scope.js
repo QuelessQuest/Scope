@@ -1,12 +1,12 @@
 import {SCOPE} from "./module/config.js";
 import {JournalDirectoryScope} from './module/sidebar/journal.js';
 import {JournalSheetScope} from "./module/journal/journal-sheet.js";
-import {CardList} from "./module/cards.js";
+//import {CardList} from "./module/cards.js";
 import {getDirection, registerSettings, sortNotes} from "./module/helper.js";
 import {getFromTheme} from "./module/helper.js";
 import {insertNote} from "./module/helper.js";
 import {patchCore} from "./module/patch.js";
-import {ScopeDocument} from "./module/scope-classes.js";
+//import {ScopeDocument} from "./module/scope-classes.js";
 import {addNote} from "./module/notes.js";
 import {addNoteTo} from "./module/notes.js";
 import {deleteNote} from "./module/notes.js";
@@ -25,9 +25,8 @@ Hooks.once("init", function () {
   CONFIG.scope = SCOPE;
   CONFIG.ui.journal = JournalDirectoryScope;
   CONFIG["JournalEntry"]["sheetClass"] = JournalSheetScope;
-  CONFIG["Note"]["documentClass"] = ScopeDocument;
+  //CONFIG["Note"]["documentClass"] = ScopeDocument;
   game.scope = SCOPE.namespace;
-  game.scope.period = new CardList(SCOPE.sortDirection.horizontal, "period");
 
   registerSettings();
   patchCore();
@@ -367,24 +366,27 @@ Hooks.on("createNote", async (noteDocument, options) => {
 
   let typeData = {
     text: journalEntry.data.name,
-    type: type,
-    tone: tone,
     icon: SCOPE.icons[type],
     iconSize: SCOPE.noteSettings[type].iconWidth,
     iconTint: getFromTheme(`${type}-icon-color`),
     fontSize: getFromTheme(`${type}-label-size`),
     textColor: getFromTheme(`${type}-label-color`),
+  }
+
+  let flagData = {
+    order: -1,
+    type: type,
+    tone: tone,
     labelBorderColor: getFromTheme(`${type}-label-stroke-color`),
     noteBorderColor: getFromTheme("border-color"),
-    order: -1
   }
 
   switch (type) {
     case "period":
-      if (periodNote) await addNoteTo(scene, noteDocument, periodNote, getDirection(noteDocument), typeData);
+      if (periodNote) await addNoteTo(noteDocument, periodNote, getDirection(noteDocument), typeData, flagData);
       else {
-        let periodNotes = scene.getEmbeddedCollection("Note").filter(note => note.data.type === "period");
-        await addNote(scene, noteDocument, sortNotes(periodNotes), typeData);
+        let periodNotes = scene.getEmbeddedCollection("Note").filter(note => note.getFlag("scope", "type") === "period");
+        await addNote(noteDocument, sortNotes(periodNotes), typeData, flagData);
       }
       break;
     case "event":
@@ -407,7 +409,7 @@ Hooks.on("createNote", async (noteDocument, options) => {
  * any associated drawings.
  */
 Hooks.on("deleteNote", async (noteDocument, options, userId) => {
-  await deleteNote(game.scenes.getName("scope"), noteDocument);
+  await deleteNote(noteDocument);
 });
 
 /**
@@ -420,5 +422,5 @@ Hooks.on("deleteNote", async (noteDocument, options, userId) => {
 Hooks.on("deleteJournalEntry", async (entity, options, userId) => {
   let note = entity.sceneNote;
   if (!note) return;
-  await deleteNote(game.scenes.getName("scope"), note);
+  await deleteNote(note);
 });

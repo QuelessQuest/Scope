@@ -1,9 +1,9 @@
 import {SCOPE} from "./config.js";
-import {ScopeDocument} from "./scope-classes.js";
+//import {ScopeDocument} from "./scope-classes.js";
 import {getFromTheme} from "./helper.js";
 import {droppedOn} from "./helper.js";
 import {isEmpty} from "./helper.js";
-import {getDirection} from "./helper.js";
+//import {getDirection} from "./helper.js";
 import {sortNotes} from "./helper.js";
 
 /**
@@ -11,44 +11,60 @@ import {sortNotes} from "./helper.js";
  * Will shift notes about if it detects a note was dropped on another note.
  * Connectors will be updated accordingly.
  *
- * @param {Scene}         scene
- * @param {ScopeDocument} note
- * @param {ScopeDocument} attachTo
+ * @param {NoteDocument} note
+ * @param {NoteDocument} attachTo
  * @param {string}        direction
  * @param {{text: string, type: string, tone: string, icon: string, iconSize: number, iconTint: string, fontSize: number, textColor: string, labelBorderColor: string, noteBorderColor: string}}  typeData
  * @returns {Promise<void>}
  */
-export async function addNoteTo(scene, note, attachTo, direction, typeData) {
+export async function addNoteTo(note, attachTo, direction, typeData, flagData) {
   let notesToUpdate = [];
+  let scene = game.scenes.getName("scope");
+
+  let attachId = attachTo.getFlag("scope", "next");
+  let attachToNext = attachId ? scene.getEmbeddedDocument("Note", attachId) : null;
 
   let noteData = {
     _id: note.data._id,
-    next: attachTo.data.next ? attachTo.data.next : null,
-    previous: attachTo,
-    order: attachTo.data.order + 1
+    flags: {
+      scope: foundry.utils.mergeObject(flagData, {
+        next: attachToNext ? attachToNext.data._id : null,
+        previous: attachTo.data._id,
+        order: attachTo.getFlag("scope", "order") + 1
+      })
+    }
   }
+
   notesToUpdate.push(foundry.utils.mergeObject(noteData, typeData));
   notesToUpdate.push({
     _id: attachTo.data._id,
-    next: note
+    flags: {
+      scope: {
+        next: note.data._id
+      }
+    }
   });
-  if (attachTo.data.next)
+  if (attachToNext)
     notesToUpdate.push({
-      _id: attachTo.data.next.data._id,
-      previous: note
+      _id: attachToNext.data._id,
+      flags: {
+        scope: {
+          previous: note.data._id
+        }
+      }
     });
 
   await scene.updateEmbeddedDocuments("Note", notesToUpdate);
 
-  let shiftNote = droppedOn(scene, note.data.type, direction, note, attachTo);
+  let shiftNote = droppedOn(note.getFlag("scope", "type"), direction, note, attachTo);
   if (isEmpty(shiftNote)) {
     let rebuildConnectorsFor = [];
     rebuildConnectorsFor.push(note);
     rebuildConnectorsFor.push(attachTo);
-    if (attachTo.next) rebuildConnectorsFor.push(attachTo.next);
+    if (attachToNext) rebuildConnectorsFor.push(attachToNext);
     await updateConnectors(sortNotes(rebuildConnectorsFor));
   } else {
-    let shiftedNotes = await _shiftNotesFrom(shiftNote, direction, scene);
+    let shiftedNotes = await _shiftNotesFrom(shiftNote, direction);
     shiftedNotes.push(attachTo);
     await updateConnectors(sortNotes(shiftedNotes));
   }
@@ -57,27 +73,33 @@ export async function addNoteTo(scene, note, attachTo, direction, typeData) {
 /**
  * Add a note to scope. It will be placed in the proper location and have order and connectors updated.
  *
- * @param {Scene}           scene
- * @param {ScopeDocument}   note
- * @param {ScopeDocument[]} sortedNotes
+ * @param {NoteDocument}   note
+ * @param {NoteDocument[]} sortedNotes
  * @param {{text: string, type: string, tone: string, icon: string, iconSize: number, iconTint: string, fontSize: number, textColor: string, labelBorderColor: string, noteBorderColor: string}}  typeData
  */
-export async function addNote(scene, note, sortedNotes, typeData) {
+export async function addNote(note, sortedNotes, typeData, flagData) {
   game.scope.locked = true;
 
   // First of its kind!
   if (sortedNotes.length === 0) {
-    let x = foundry.utils.mergeObject(typeData, {_id: note.data._id, order: 0});
+    let x = foundry.utils.mergeObject(typeData, {
+      _id: note.data._id,
+      flags: {
+        scope: foundry.utils.mergeObject(flagData, {order: 0})
+        }
+    });
+
+    let scene = game.scenes.getName("scope");
     await scene.updateEmbeddedDocuments("Note", [x]);
     game.scope.locked = false;
     return;
   }
 
-  let direction = getDirection(note);
+  let direction = note.getFlag("scope", "direction");
   let coord = note.data[direction];
 
   let attachTo = _findNoteToAttachTo(coord, direction, sortedNotes);
-  if (attachTo) await addNoteTo(scene, note, attachTo, direction, typeData);
+  if (attachTo) await addNoteTo(note, attachTo, direction, typeData, flagData);
 
   game.scope.locked = false;
 }
@@ -85,15 +107,17 @@ export async function addNote(scene, note, sortedNotes, typeData) {
 /**
  * Retrieve all the notes from this note to the end of the notes
  *
- * @param {Scene}         scene
- * @param {ScopeDocument} note
- * @returns {ScopeDocument[]}
+ * @param {NoteDocument} note
+ * @returns {NoteDocument[]}
  */
-function getNotesFrom(scene, note) {
+function getNotesFrom(note) {
+  let scene = game.scenes.getName("scope");
   let notes = [];
+  let nextId = note.getFlag("scope", "next");
+  let next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
   notes.push(note);
-  if (note.next) {
-    notes.concat(getNotesFrom(scene, note.next));
+  if (next) {
+    notes.concat(getNotesFrom(next));
   }
   return notes;
 }
@@ -102,37 +126,50 @@ function getNotesFrom(scene, note) {
  * Remove a note. This will remove and rebuild connectors as necessary and update the order
  * of the notes to reflect the removal of a note.
  *
- * @param {Scene}         scene
- * @param {ScopeDocument} note
+ * @param {NoteDocument} note
  * @returns {Promise<void>}
  */
-export async function deleteNote(scene, note) {
+export async function deleteNote(note) {
+
+  let scene = game.scenes.getName("scope");
 
   let connectorsToUpdate = [];
   let notesToUpdate = [];
+  let nextId = note.getFlag("scope", "next");
+  let previousId = note.getFlag("scope", "previous");
+  let next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
+  let previous = previousId ? scene.getEmbeddedDocument("Note", previousId) : null;
 
-  if (note.data.next) {
+  if (next) {
 
-    connectorsToUpdate.push(note.data.next);
+    connectorsToUpdate.push(next);
     notesToUpdate.push({
-      id: note.data.next.data._id,
-      previous: note.data.next,
-      order: note.data.next.order - 1
+      id: next.data._id,
+      flags: {
+        scope: {
+          previous: next.data._id,
+          order: next.getFlag("scope", "order") - 1
+        }
+      }
     });
 
-    for (const n of getNotesFrom(scene, note.data.next)) {
+    for (const n of getNotesFrom(next)) {
       notesToUpdate.push({
         id: n.data._id,
-        order: n.data.order - 1
-      })
+        flags: {
+          scope: {
+            order: n.getFlag("scope", "order") - 1
+          }
+        }
+      });
     }
   }
 
-  if (note.data.previous) {
-    connectorsToUpdate.push(note.data.previous);
+  if (previous) {
+    connectorsToUpdate.push(previous);
     notesToUpdate.push({
-      id: note.data.previous.data._id,
-      next: note.data.next
+      id: previous.data._id,
+      next: next.data._id
     });
   }
 
@@ -148,30 +185,35 @@ export async function deleteNote(scene, note) {
 /**
  * Shift all notes on the canvas from this note to the end of the notes.
  *
- * @param {ScopeDocument} noteToShift
+ * @param {NoteDocument} noteToShift
  * @param {number}        order
  * @param {number}        amount
  * @param {string}        direction
- * @param {Scene}         scene
- * @returns {ScopeDocument[]}
+ * @returns {NoteDocument[]}
  * @private
  */
-async function _shiftNotesFrom({noteToShift: noteToShift, order: order, amount: amount}, direction, scene) {
+async function _shiftNotesFrom({noteToShift: noteToShift, order: order, amount: amount}, direction) {
 
+  let scene = game.scenes.getName("scope");
   let notesToUpdate = [];
   let currentNote = noteToShift;
   do {
     let data = {
       _id: currentNote.data._id,
-      order: currentNote.data.order + order,
       x: currentNote.data.x + (direction === "x" ? amount : 0),
-      y: currentNote.data.y + (direction === "y" ? amount : 0)
-    }
+      y: currentNote.data.y + (direction === "y" ? amount : 0),
+      flags: {
+        scope: {
+          order: currentNote.getFlag("scope", "order") + order,
+        }
+      }
+    };
 
     notesToUpdate.push(data);
 
     order++;
-    currentNote = currentNote.data.next;
+    let id = currentNote.getFlag("scope", "next");
+    currentNote = id ? scene.getEmbeddedDocument("Note", id) : null;
   } while (currentNote);
 
   if (notesToUpdate.length > 0)
@@ -186,18 +228,21 @@ async function _shiftNotesFrom({noteToShift: noteToShift, order: order, amount: 
  *
  * @param {number}          value
  * @param {string}          direction
- * @param {ScopeDocument[]} list
- * @returns {ScopeDocument}
+ * @param {NoteDocument[]} list
+ * @returns {NoteDocument}
  */
 function _findNoteToAttachTo(value, direction, list) {
+  let scene = game.scenes.getName("scope");
   for (const note of list) {
-    if (value > list.data[direction])
-      if (list.data.next) {
-        if (value <= list.data.next.data[direction])
+    if (value > note.data[direction]) {
+      let nextId = note.getFlag("scope", "next");
+      if (nextId) {
+        let next = scene.getEmbeddedDocument("Note", nextId);
+        if (value <= next.data[direction])
           return note;
       } else
         return note;
-    else
+    } else
       return note;
   }
 }
@@ -205,35 +250,48 @@ function _findNoteToAttachTo(value, direction, list) {
 /**
  * For the provided notes, delete all exiting connectors and create new based on current positions
  *
- * @param {ScopeDocument[]} notes
- * @returns {ScopeDocument[]}
+ * @param {NoteDocument[]} notes
+ * @returns {NoteDocument[]}
  */
 export async function updateConnectors(notes) {
-
-  let scene = game.scenes.getName("scope");
 
   // TODO - Move Attached, if set
 
   // Remove existing connectors
-  await removeConnectors(scene, notes);
+  await removeConnectors(notes);
+
+  let scene = game.scenes.getName("scope");
 
   // Recreate connectors based on the new positions
+  let previous = null;
   let updateNotes = [];
   for (const note of notes) {
-    let previousHorizontal = note.data.previous ? note.data.previous.connectors.nextHorizontal : null;
-    let previousVertical = note.data.previous ? note.data.previous.connectors.nextVertical : null;
-    let next = note.data.next ? await _createConnection(scene, note, note.data.next) : null;
+    let nextId = note.getFlag("scope", "next");
+    let next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
+    let nextConnector = next ? (await _createConnection(scene, note, next)).pop() : null;
+    let nextConnectorId = nextConnector ? nextConnector.data._id : null;
 
-    let direction = getDirection(note);
+    let direction = note.getFlag("scope", "direction");
+
+    let currentPreviousId = direction === "x" ?
+      note.getFlag("scope", "previousHorizontal") :
+      note.getFlag("scope", "previousVertical");
+
+    let usePrevious = currentPreviousId ? currentPreviousId : previous;
+
     updateNotes.push({
       _id: note.data._id,
-      connectors: {
-        previousVertical: previousVertical,
-        previousHorizontal: previousHorizontal,
-        nextVertical: direction === "x" ? next : null,
-        nextHorizontal: direction === "y" ? next : null
+      flags: {
+        scope: {
+          previousVertical: direction === "y" ? usePrevious : null,
+          previousHorizontal: direction === "x" ? usePrevious : null,
+          nextVertical: direction === "y" ? nextConnectorId : null,
+          nextHorizontal: direction === "x" ? nextConnectorId : null
+        }
       }
     });
+
+    previous = nextConnectorId;
   }
 
   return scene.updateEmbeddedDocuments("Note", updateNotes);
@@ -242,26 +300,20 @@ export async function updateConnectors(notes) {
 /**
  * For the provided notes, remove the associated connector drawings
  *
- * @param {Scene}           scene
- * @param {ScopeDocument[]} notes
+ * @param {NoteDocument[]} notes
  * @returns {Promise<void>}
  */
-async function removeConnectors(scene, notes) {
+async function removeConnectors(notes) {
+  let scene = game.scenes.getName("scope");
   let drawingIds = [];
   for (const note of notes) {
-    if (note.data.connectors) {
-      if (note.data.connectors.previousHorizontal)
-        drawingIds.push(note.data.connectors.previousHorizontal.data._id);
-      if (note.data.connectors.nextHorizontal)
-        drawingIds.push(note.data.connectors.nextHorizontal.data._id);
-      if (note.data.connectors.previousVertical)
-        drawingIds.push(note.data.connectors.previousVertical.data._id);
-      if (note.data.connectors.nextVertical)
-        drawingIds.push(note.data.connectors.nextVertical.data._id);
-    }
+      if (note.getFlag("scope", "nextHorizontal"))
+        drawingIds.push(note.getFlag("scope", "nextHorizontal"));
+      if (note.getFlag("scope", "nextVertical"))
+        drawingIds.push(note.getFlag("scope", "nextVertical"));
   }
 
-  if (drawingIds)
+  if (drawingIds.length > 0)
     await scene.deleteEmbeddedDocuments("Drawing", drawingIds);
 }
 
@@ -269,8 +321,8 @@ async function removeConnectors(scene, notes) {
  * Create a connector drawing between two notes
  *
  * @param {Scene}         scene
- * @param {ScopeDocument} noteOne
- * @param {ScopeDocument} noteTwo
+ * @param {NoteDocument} noteOne
+ * @param {NoteDocument} noteTwo
  * @returns {DrawingDocument}
  * @private
  */
@@ -284,8 +336,8 @@ async function _createConnection(scene, noteOne, noteTwo) {
     x: noteOne.data.x,
     y: noteOne.data.y,
     points: points,
-    width: cardTwo.data.x - cardOne.data.x,
-    height: Math.abs(cardTwo.data.y - cardOne.data.y),
+    width: noteTwo.data.x - noteOne.data.x,
+    height: Math.abs(noteTwo.data.y - noteOne.data.y),
     strokeColor: getFromTheme("period-link-color"),
   }
 

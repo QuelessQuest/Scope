@@ -1,5 +1,5 @@
 import {SCOPE} from "./config.js";
-import {ScopeData} from "./data/data.mjs";
+//import {ScopeData} from "./data/data.mjs";
 
 /**
  * Return true if the object is empty, false otherwise
@@ -12,7 +12,7 @@ export function isEmpty(thing) {
 
 /**
  *
- * @param {ScopeDocument} note
+ * @param {NoteDocument} note
  * @param {string} type
  * @returns {{x: *, y: *}}
  */
@@ -25,15 +25,21 @@ export function getSpacedPoint(note, type) {
  * @param {string}  id
  * @param {number}  x
  * @param {number}  y
+ * @param {string}  direction
  * @returns {Document[]}
  */
-export async function insertNote(id, {x, y}) {
-  const noteData = new ScopeData({
+export async function insertNote(id, {x, y}, direction = "x") {
+  const noteData = new foundry.data.NoteData({
     entryId: id,
     x: x,
     y: y,
     icon: CONST.DEFAULT_NOTE_ICON,
-    textAnchor: CONST.TEXT_ANCHOR_POINTS.CENTER
+    textAnchor: CONST.TEXT_ANCHOR_POINTS.CENTER,
+    flags: {
+      scope: {
+        direction: direction
+      }
+    }
   });
 
   if (!canvas.grid.hitArea.contains(x, y)) return false;
@@ -200,11 +206,11 @@ export function registerSettings() {
 
 /**
  *
- * @param {ScopeDocument} note
+ * @param {NoteDocument} note
  * @returns {string}
  */
 export function getDirection(note) {
-  switch (note.data.type) {
+  switch (note.getFlag("scope", "type")) {
     case "period":
     case "scene":
       return "x";
@@ -215,14 +221,15 @@ export function getDirection(note) {
 
 /**
  *
- * @param {Scene}         scene
  * @param {string}        type
  * @param {string}        direction
- * @param {ScopeDocument} note
- * @param {ScopeDocument} noteToCheck
- * @returns {{}|{noteToShift: ScopeDocument, order: number, amount: number}}
+ * @param {NoteDocument} note
+ * @param {NoteDocument} noteToCheck
+ * @returns {{}|{noteToShift: NoteDocument, order: number, amount: number}}
  */
-export function droppedOn(scene, type, direction, note, noteToCheck) {
+export function droppedOn(type, direction, note, noteToCheck) {
+
+  let scene = game.scenes.getName("scope");
 
   // Was the new note dropped on top of the note
   if (SCOPE.bump.hitTestRectangle(note, noteToCheck)) {
@@ -235,12 +242,17 @@ export function droppedOn(scene, type, direction, note, noteToCheck) {
   }
 
   // Was the new note dropped on top of the next note
-  if (noteToCheck.data.next) {
-    if (SCOPE.bump.hitTestRectangle(note, noteToCheck.data.next)) {
+  let nextId = noteToCheck.getFlag("scope", "next");
+  let next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
+  if (next) {
+    if (SCOPE.bump.hitTestRectangle(note, next)) {
+      let nextCheck = noteToCheck.getFlag("scope", "next");
+      let nextNote = nextCheck ? scene.getEmbeddedDocument("Note", nextCheck) : null;
+      let nextDirection = nextNote ? nextNote.data[direction] : 0;
       return {
-        noteToShift: noteToCheck.data.next,
+        noteToShift: next,
         order: 1,
-        amount: (SCOPE.noteSettings[type].spacing - (note.data[direction] - noteToCheck.data.next[direction]))
+        amount: (SCOPE.noteSettings[type].spacing - (note.data[direction] - nextDirection))
           + (SCOPE.noteSettings[this.type].spacing[this.sortDirection] + SCOPE.noteSettings.spacing)
       };
     }
@@ -250,5 +262,5 @@ export function droppedOn(scene, type, direction, note, noteToCheck) {
 }
 
 export function sortNotes(notesToSort) {
-  return notesToSort.sort((a, b) => a.data.order - b.data.order);
+  return notesToSort.sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
 }

@@ -112,6 +112,7 @@ export class ScopeData extends foundry.abstract.DocumentData {
         previousVertical: foreignDocumentField({type: foundry.documents.BaseDrawing, required: false})
       },
       order: Number,
+      direction: STRING_FIELD,
       entryId: foreignDocumentField({type: foundry.documents.BaseJournalEntry, required: false}),
       x: REQUIRED_NUMBER,
       y: REQUIRED_NUMBER,

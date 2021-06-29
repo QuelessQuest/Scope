@@ -82,7 +82,7 @@ export class JournalDirectoryScope extends JournalDirectory {
 
     let scene = game.scenes.getName("scope");
     let periods = scene.getEmbeddedCollection("Note")
-      .filter(note => note.data.type === "period");
+      .filter(note => note.getFlag("scope", "type") === "period");
 
     let periodPairs = {none: "--"};
     for (const period of periods) {
@@ -100,17 +100,20 @@ export class JournalDirectoryScope extends JournalDirectory {
     let text = "";
     let id = "";
     let legacyData = {};
+    let direction = "";
 
     switch (type) {
       case "period":
         typeName = game.i18n.localize('SCOPE.JournalPeriod');
         attachCard = typeName;
+        direction = "x";
         break;
       case "event":
         eventCards = {"none": "--"};
         typeName = game.i18n.localize('SCOPE.JournalEvent');
         attachCard = game.i18n.localize('SCOPE.JournalPeriod');
         attachSubCard = typeName;
+        direction = "y";
         break;
       case "scene":
         eventCards = {"none": "--"};
@@ -119,6 +122,7 @@ export class JournalDirectoryScope extends JournalDirectory {
         attachCard = game.i18n.localize('SCOPE.JournalPeriod');
         attachSubCard = game.i18n.localize('SCOPE.JournalEvent');
         attachSubSubCard = typeName;
+        direction = "x";
         break;
       case "picture":
         typeName = game.i18n.localize("SCOPE.UpdatePicture");
@@ -156,7 +160,8 @@ export class JournalDirectoryScope extends JournalDirectory {
       text: text,
       id: id,
       folderId: data.folderId,
-      legacyData: legacyData
+      legacyData: legacyData,
+      direction: direction
     };
   }
 
@@ -336,6 +341,7 @@ export class JournalDirectoryScope extends JournalDirectory {
           e.getFlag("scope", "attachToPeriod"),
           e.getFlag("scope", "attachToEvent"),
           e.getFlag("scope", "attachToScene"),
+          e.getFlag("scope", "direction"),
           type,
           e.id);
       });
@@ -354,10 +360,8 @@ export class JournalDirectoryScope extends JournalDirectory {
    */
   async _createJournalEntry(name, tone, folderId, fo, type) {
     const content = await renderTemplate(`systems/scope/templates/journal/journal-${type}.html`, fo);
-    let attachToEvent = "none";
-    let attachToScene = "none";
-    if (fo.attachToEvent) attachToEvent = fo.attachToEvent;
-    if (fo.attachToScene) attachToScene = fo.attachToScene;
+    let attachToEvent = fo.attachToEvent ? fo.attachToEvent : "none";
+    let attachToScene = fo.attachToScene ? fo.attachToScene : "none";
     const createData = {
       content: content,
       name: name,
@@ -369,6 +373,7 @@ export class JournalDirectoryScope extends JournalDirectory {
         scope: {
           type: type,
           tone: tone,
+          direction: fo.direction,
           attachToPeriod: fo.attachToPeriod,
           attachToEvent: attachToEvent,
           attachToScene: attachToScene
@@ -422,18 +427,19 @@ export class JournalDirectoryScope extends JournalDirectory {
    * @param {string}  periodId
    * @param {string}  eventId
    * @param {string}  sceneId
+   * @param {string}  direction
    * @param {string}  type
    * @param {string}  entityId
    * @private
    */
-  _maybeCreateNote(periodId, eventId, sceneId, type, entityId) {
+  _maybeCreateNote(periodId, eventId, sceneId, direction, type, entityId) {
 
     if (!periodId || periodId === "none") return;
     let scene = game.scenes.getName("scope");
     let periodNote = scene.getEmbeddedDocument("Note", periodId);
     switch (type) {
       case "period":
-        insertNote(entityId, getSpacedPoint(periodNote, "period")).then(() => {
+        insertNote(entityId, getSpacedPoint(periodNote, "period"), direction).then(() => {
         });
         break;
       case "event":
