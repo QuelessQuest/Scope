@@ -1,5 +1,4 @@
 import {SCOPE} from "./config.js";
-//import {ScopeData} from "./data/data.mjs";
 
 /**
  * Return true if the object is empty, false otherwise
@@ -17,7 +16,10 @@ export function isEmpty(thing) {
  * @returns {{x: *, y: *}}
  */
 export function getSpacedPoint(note, type) {
-  return {x: note.data.x + SCOPE.noteSettings[type].spacing.x, y: note.data.y + SCOPE.noteSettings[type].spacing.y};
+  let direction = note.getFlag("scope", "direction");
+  let shiftX = direction === "x" ? SCOPE.noteSettings[type].iconWidth + SCOPE.noteSettings[type].spacing : 0;
+  let shiftY = direction === "y" ? SCOPE.noteSettings[type].iconWidth + SCOPE.noteSettings[type].spacing : 0;
+  return {x: note.data.x + shiftX, y: note.data.y + shiftY};
 }
 
 /**
@@ -241,12 +243,13 @@ export function droppedOn(type, direction, note, noteToCheck) {
     };
   }
 
+  let nextFlag = "next" + direction.toUpperCase();
   // Was the new note dropped on top of the next note
-  let nextId = noteToCheck.getFlag("scope", "next");
+  let nextId = noteToCheck.getFlag("scope", nextFlag);
   let next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
   if (next) {
     if (SCOPE.bump.hitTestRectangle(note, next)) {
-      let nextCheck = noteToCheck.getFlag("scope", "next");
+      let nextCheck = noteToCheck.getFlag("scope", nextFlag);
       let nextNote = nextCheck ? scene.getEmbeddedDocument("Note", nextCheck) : null;
       let nextDirection = nextNote ? nextNote.data[direction] : 0;
       return {

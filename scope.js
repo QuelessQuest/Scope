@@ -1,12 +1,10 @@
 import {SCOPE} from "./module/config.js";
 import {JournalDirectoryScope} from './module/sidebar/journal.js';
 import {JournalSheetScope} from "./module/journal/journal-sheet.js";
-//import {CardList} from "./module/cards.js";
 import {getDirection, registerSettings, sortNotes} from "./module/helper.js";
 import {getFromTheme} from "./module/helper.js";
 import {insertNote} from "./module/helper.js";
 import {patchCore} from "./module/patch.js";
-//import {ScopeDocument} from "./module/scope-classes.js";
 import {addNote} from "./module/notes.js";
 import {addNoteTo} from "./module/notes.js";
 import {deleteNote} from "./module/notes.js";
@@ -318,9 +316,29 @@ Hooks.on("dropCanvasData", (canvas, data) => {
 /**
  * Rerender the connectors when the note is moved.
  */
-Hooks.on("updateNote", async (entity, note, options, userid) => {
-  if (!game.scope.locked)
-    await updateConnectors(note);
+Hooks.on("updateNote", async (note, data, options, userid) => {
+  if (!game.scope.locked) {
+
+    game.scope.locked = true;
+    let direction = note.getFlag("scope", "direction");
+    let nextFlag = "next" + direction.toUpperCase();
+    let previousFlag = "previous" + direction.toUpperCase();
+    let scene = game.scenes.getName("scope");
+    let toUpdate = [];
+
+    toUpdate.push(note);
+
+    let nextId = note.getFlag("scope", nextFlag);
+    let next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
+    let previousId = note.getFlag("scope", previousFlag);
+    let previous = previousId ? scene.getEmbeddedDocument("Note", previousId) : null;
+
+    if (next) toUpdate.push(next);
+    if (previous) toUpdate.push(previous);
+    await updateConnectors(sortNotes(toUpdate), direction);
+    game.scope.locked = false;
+
+  }
 });
 
 /**
@@ -333,13 +351,13 @@ Hooks.on("createNote", async (noteDocument, options) => {
 
   Object.defineProperty(noteDocument, "centerX", {
     get: function get() {
-      return noteDocument.x;
+      return noteDocument.data.x;
     },
     enumerable: true, configurable: true
   });
   Object.defineProperty(noteDocument, "centerY", {
     get: function get() {
-      return noteDocument.y;
+      return noteDocument.data.y;
     },
     enumerable: true, configurable: true
   });

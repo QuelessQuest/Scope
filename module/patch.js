@@ -50,7 +50,7 @@ export function patchCore() {
     let tint = this.data.iconTint ? foundry.utils.colorStringToHex(this.data.iconTint) : null;
     let iconWidth = this.data.iconWidth || 360;
     let iconHeight = this.data.iconHeight || 160;
-    let nbc = this.data.noteBorderColor;
+    let nbc = this.document.getFlag("scope", "noteBorderColor");
     let borderColor = foundry.utils.colorStringToHex(nbc);
     let borderColorHalf = foundry.utils.colorStringToHex(`${nbc}80`);
     let tone = this.document.getFlag("scope", "tone");

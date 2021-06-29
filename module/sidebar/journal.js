@@ -4,6 +4,7 @@ import {insertNote} from "../helper.js";
 import {getBookendPositions} from "../helper.js";
 import {arrange} from "../helper.js";
 import {getSpacedPoint} from "../helper.js";
+import {findNoteToAttachTo} from  "../notes.js";
 
 export class JournalDirectoryScope extends JournalDirectory {
 
@@ -448,6 +449,16 @@ export class JournalDirectoryScope extends JournalDirectory {
           ui.notifications.warn("Something Bad Happened: Could not find the period", {permanent: true});
           return;
         }
+
+        if (eventId !== "none") {
+          let headEventId = periodNote.getFlag("scope", "nextVertical");
+          findNoteToAttachTo()
+        } else {
+          // No event specified, so attach to the end of the periods event list
+
+        }
+
+
         // TODO - Events and Scenes
 /*
         if (eventId !== "none") {

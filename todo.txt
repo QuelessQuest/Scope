@@ -1,0 +1,6 @@
+- When a JournalEntry is renamed, also update the corresponding note, if any
+- When a JournalEntry is deleted, also delete  the corresponding note, if any
+
+- Note deletion
+    - remove/rebuild connectors
+    - update all next/prev

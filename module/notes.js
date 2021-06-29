@@ -1,9 +1,7 @@
 import {SCOPE} from "./config.js";
-//import {ScopeDocument} from "./scope-classes.js";
 import {getFromTheme} from "./helper.js";
 import {droppedOn} from "./helper.js";
 import {isEmpty} from "./helper.js";
-//import {getDirection} from "./helper.js";
 import {sortNotes} from "./helper.js";
 
 /**
@@ -18,18 +16,25 @@ import {sortNotes} from "./helper.js";
  * @returns {Promise<void>}
  */
 export async function addNoteTo(note, attachTo, direction, typeData, flagData) {
+  game.scope.locked = true;
+
   let notesToUpdate = [];
+  let nextFlag = "next" + direction.toUpperCase();
+  let previousFlag = "previous" + direction.toUpperCase();
   let scene = game.scenes.getName("scope");
 
-  let attachId = attachTo.getFlag("scope", "next");
+  let attachId = attachTo.getFlag("scope", nextFlag);
   let attachToNext = attachId ? scene.getEmbeddedDocument("Note", attachId) : null;
+  let nextId = attachToNext ? attachToNext.data._id : null;
 
   let noteData = {
     _id: note.data._id,
     flags: {
       scope: foundry.utils.mergeObject(flagData, {
-        next: attachToNext ? attachToNext.data._id : null,
-        previous: attachTo.data._id,
+        nextX: direction === "x" ? nextId : note.getFlag("scope", nextFlag),
+        nextY: direction === "y" ? nextId : note.getFlag("scope", nextFlag),
+        previousX: direction === "x" ? attachTo.data._id : note.getFlag("scope", previousFlag),
+        previousY: direction === "y" ? attachTo.data._id : note.getFlag("scope", previousFlag),
         order: attachTo.getFlag("scope", "order") + 1
       })
     }
@@ -40,19 +45,27 @@ export async function addNoteTo(note, attachTo, direction, typeData, flagData) {
     _id: attachTo.data._id,
     flags: {
       scope: {
-        next: note.data._id
+        nextX: direction === "x" ? note.data._id : note.getFlag("scope", nextFlag),
+        nextY: direction === "y" ? note.data._id : note.getFlag("scope", nextFlag)
       }
     }
   });
-  if (attachToNext)
+  if (attachToNext) {
     notesToUpdate.push({
       _id: attachToNext.data._id,
       flags: {
         scope: {
-          previous: note.data._id
+          previousX: direction === "x" ? note.data._id : note.getFlag("scope", previousFlag),
+          previousY: direction === "y" ? note.data._id : note.getFlag("scope", previousFlag),
+          order: attachToNext.getFlag("scope", "order") + 1
         }
       }
     });
+    let atnNextId = attachToNext.getFlag("scope", nextFlag);
+    if (atnNextId) {
+      notesToUpdate = notesToUpdate.concat(_incrementOrderFrom(scene.getEmbeddedDocument("Note", atnNextId), nextFlag));
+    }
+  }
 
   await scene.updateEmbeddedDocuments("Note", notesToUpdate);
 
@@ -62,12 +75,14 @@ export async function addNoteTo(note, attachTo, direction, typeData, flagData) {
     rebuildConnectorsFor.push(note);
     rebuildConnectorsFor.push(attachTo);
     if (attachToNext) rebuildConnectorsFor.push(attachToNext);
-    await updateConnectors(sortNotes(rebuildConnectorsFor));
+    await updateConnectors(sortNotes(rebuildConnectorsFor), direction);
   } else {
     let shiftedNotes = await _shiftNotesFrom(shiftNote, direction);
     shiftedNotes.push(attachTo);
-    await updateConnectors(sortNotes(shiftedNotes));
+    await updateConnectors(sortNotes(shiftedNotes), direction);
   }
+
+  game.scope.locked = false;
 }
 
 /**
@@ -86,7 +101,7 @@ export async function addNote(note, sortedNotes, typeData, flagData) {
       _id: note.data._id,
       flags: {
         scope: foundry.utils.mergeObject(flagData, {order: 0})
-        }
+      }
     });
 
     let scene = game.scenes.getName("scope");
@@ -98,26 +113,26 @@ export async function addNote(note, sortedNotes, typeData, flagData) {
   let direction = note.getFlag("scope", "direction");
   let coord = note.data[direction];
 
-  let attachTo = _findNoteToAttachTo(coord, direction, sortedNotes);
-  if (attachTo) await addNoteTo(note, attachTo, direction, typeData, flagData);
-
+  let attachTo = findNoteToAttachTo(coord, direction, sortedNotes);
   game.scope.locked = false;
+  if (attachTo) await addNoteTo(note, attachTo, direction, typeData, flagData);
 }
 
 /**
  * Retrieve all the notes from this note to the end of the notes
  *
- * @param {NoteDocument} note
+ * @param {NoteDocument}  note
+ * @param {string}        nextFlag
  * @returns {NoteDocument[]}
  */
-function getNotesFrom(note) {
+export function getNotesFrom(note, nextFlag) {
   let scene = game.scenes.getName("scope");
   let notes = [];
-  let nextId = note.getFlag("scope", "next");
+  let nextId = note.getFlag("scope", nextFlag);
   let next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
   notes.push(note);
   if (next) {
-    notes.concat(getNotesFrom(next));
+    notes.concat(getNotesFrom(next, nextFlag));
   }
   return notes;
 }
@@ -132,11 +147,14 @@ function getNotesFrom(note) {
 export async function deleteNote(note) {
 
   let scene = game.scenes.getName("scope");
+  let direction = note.getFlag("scope", "direction");
+  let nextFlag = "next" + direction.toUpperCase();
+  let previousFlag = "previous" + direction.toUpperCase();
 
   let connectorsToUpdate = [];
   let notesToUpdate = [];
-  let nextId = note.getFlag("scope", "next");
-  let previousId = note.getFlag("scope", "previous");
+  let nextId = note.getFlag("scope", nextFlag);
+  let previousId = note.getFlag("scope", previousFlag);
   let next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
   let previous = previousId ? scene.getEmbeddedDocument("Note", previousId) : null;
 
@@ -147,13 +165,14 @@ export async function deleteNote(note) {
       id: next.data._id,
       flags: {
         scope: {
-          previous: next.data._id,
+          previousX: direction === "x" ? next.data._id : next.getFlag("scope", previousFlag),
+          previousY: direction === "y" ? next.data._id : next.getFlag("scope", previousFlag),
           order: next.getFlag("scope", "order") - 1
         }
       }
     });
 
-    for (const n of getNotesFrom(next)) {
+    for (const n of getNotesFrom(next, nextFlag)) {
       notesToUpdate.push({
         id: n.data._id,
         flags: {
@@ -169,13 +188,14 @@ export async function deleteNote(note) {
     connectorsToUpdate.push(previous);
     notesToUpdate.push({
       id: previous.data._id,
-      next: next.data._id
+      nextX: direction === "x" ? next.data._id : previous.getFlag("scope", nextFlag),
+      nextY: direction === "y" ? next.data._id : previous.getFlag("scope", nextFlag)
     });
   }
 
   game.scope.locked = true;
   if (connectorsToUpdate)
-    await updateConnectors(connectorsToUpdate);
+    await updateConnectors(connectorsToUpdate, direction);
   if (notesToUpdate)
     await scene.updateEmbeddedDocuments("Note", notesToUpdate);
 
@@ -195,6 +215,7 @@ export async function deleteNote(note) {
 async function _shiftNotesFrom({noteToShift: noteToShift, order: order, amount: amount}, direction) {
 
   let scene = game.scenes.getName("scope");
+  let nextFlag = "next" + direction.toUpperCase();
   let notesToUpdate = [];
   let currentNote = noteToShift;
   do {
@@ -212,7 +233,7 @@ async function _shiftNotesFrom({noteToShift: noteToShift, order: order, amount: 
     notesToUpdate.push(data);
 
     order++;
-    let id = currentNote.getFlag("scope", "next");
+    let id = currentNote.getFlag("scope", nextFlag);
     currentNote = id ? scene.getEmbeddedDocument("Note", id) : null;
   } while (currentNote);
 
@@ -231,11 +252,12 @@ async function _shiftNotesFrom({noteToShift: noteToShift, order: order, amount: 
  * @param {NoteDocument[]} list
  * @returns {NoteDocument}
  */
-function _findNoteToAttachTo(value, direction, list) {
+export function findNoteToAttachTo(value, direction, list) {
   let scene = game.scenes.getName("scope");
+  let nextFlag = "next" + direction.toUpperCase();
   for (const note of list) {
     if (value > note.data[direction]) {
-      let nextId = note.getFlag("scope", "next");
+      let nextId = note.getFlag("scope", nextFlag);
       if (nextId) {
         let next = scene.getEmbeddedDocument("Note", nextId);
         if (value <= next.data[direction])
@@ -250,12 +272,16 @@ function _findNoteToAttachTo(value, direction, list) {
 /**
  * For the provided notes, delete all exiting connectors and create new based on current positions
  *
- * @param {NoteDocument[]} notes
+ * @param {NoteDocument[]}  notes
+ * @param {string}          direction
  * @returns {NoteDocument[]}
  */
-export async function updateConnectors(notes) {
+export async function updateConnectors(notes, direction) {
 
   // TODO - Move Attached, if set
+
+  let nextFlag = "next" + direction.toUpperCase();
+  let previousConnectorFlag = "previous" + (direction === "x" ? "Horizontal" : "Vertical");
 
   // Remove existing connectors
   await removeConnectors(notes);
@@ -266,17 +292,12 @@ export async function updateConnectors(notes) {
   let previous = null;
   let updateNotes = [];
   for (const note of notes) {
-    let nextId = note.getFlag("scope", "next");
+    let nextId = note.getFlag("scope", nextFlag);
     let next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
     let nextConnector = next ? (await _createConnection(scene, note, next)).pop() : null;
     let nextConnectorId = nextConnector ? nextConnector.data._id : null;
 
-    let direction = note.getFlag("scope", "direction");
-
-    let currentPreviousId = direction === "x" ?
-      note.getFlag("scope", "previousHorizontal") :
-      note.getFlag("scope", "previousVertical");
-
+    let currentPreviousId = note.getFlag("scope", previousConnectorFlag);
     let usePrevious = currentPreviousId ? currentPreviousId : previous;
 
     updateNotes.push({
@@ -307,10 +328,10 @@ async function removeConnectors(notes) {
   let scene = game.scenes.getName("scope");
   let drawingIds = [];
   for (const note of notes) {
-      if (note.getFlag("scope", "nextHorizontal"))
-        drawingIds.push(note.getFlag("scope", "nextHorizontal"));
-      if (note.getFlag("scope", "nextVertical"))
-        drawingIds.push(note.getFlag("scope", "nextVertical"));
+    if (note.getFlag("scope", "nextHorizontal"))
+      drawingIds.push(note.getFlag("scope", "nextHorizontal"));
+    if (note.getFlag("scope", "nextVertical"))
+      drawingIds.push(note.getFlag("scope", "nextVertical"));
   }
 
   if (drawingIds.length > 0)
@@ -343,5 +364,36 @@ async function _createConnection(scene, noteOne, noteTwo) {
 
   foundry.utils.mergeObject(options, dynamicOptions);
   return scene.createEmbeddedDocuments("Drawing", [options]);
-  //return DrawingDocument.create(options, {parent: canvas.scene});
+}
+
+/**
+ *
+ * @param {NoteDocument}  note
+ * @param {string}        nextFlag
+ * @returns {NoteDocument[]}
+ * @private
+ */
+function _incrementOrderFrom(note, nextFlag) {
+
+  let scene = game.scenes.getName("scope");
+  let notesToUpdate = [];
+  let currentNote = note;
+  do {
+    let data = {
+      _id: currentNote.data._id,
+      flags: {
+        scope: {
+          order: currentNote.getFlag("scope", "order") + 1,
+        }
+      }
+    };
+
+    notesToUpdate.push(data);
+
+    let id = currentNote.getFlag("scope", nextFlag);
+    currentNote = id ? scene.getEmbeddedDocument("Note", id) : null;
+
+  } while (currentNote);
+
+  return notesToUpdate;
 }
