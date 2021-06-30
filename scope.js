@@ -246,8 +246,10 @@ Hooks.on("dropCanvasData", (canvas, data) => {
   const type = game.journal.get(data.id).getFlag("scope", "type");
   switch (type) {
     case "period":
+      insertNote(data.id, {x: data.x, y: data.y}, "x");
+      break;
     case "event":
-      insertNote(data.id, {x: data.x, y: data.y});
+      insertNote(data.id, {x: data.x, y: data.y}, "y");
       break;
     case "scene":
       break;
@@ -332,7 +334,7 @@ Hooks.on("createNote", async (noteDocument, options) => {
       if (periodNote) await addNoteTo(noteDocument, periodNote, "x", typeData, flagData);
       else {
         let periodNotes = scene.getEmbeddedCollection("Note").filter(note => note.getFlag("scope", "type") === "period");
-        await addNote(noteDocument, sortNotes(periodNotes), typeData, flagData);
+        await addNote(noteDocument, sortNotes(periodNotes, "x"), typeData, flagData);
       }
       break;
     case "event":
@@ -344,7 +346,7 @@ Hooks.on("createNote", async (noteDocument, options) => {
           let eventHeadId = periodNote.getFlag("scope", "nextY");
           if (eventHeadId) {
             let eventNotes = scene.getEmbeddedCollection("Note").filter(note => note.getFlag("scope", "type") === "event");
-            await addNote(noteDocument, sortNotes(eventNotes), typeData, flagData);
+            await addNote(noteDocument, sortNotes(eventNotes, "y"), typeData, flagData);
           } else {
             await addNoteTo(noteDocument, periodNote, "y", typeData, flagData);
           }

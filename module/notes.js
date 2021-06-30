@@ -107,12 +107,19 @@ export async function addNote(note, notes, typeData, flagData) {
 export function getNotesFrom(note, nextFlag) {
   let scene = game.scenes.getName("scope");
   let notes = [];
-  let nextId = note.getFlag("scope", nextFlag);
-  let next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
+  let next = null;
   notes.push(note);
-  if (next) {
-    notes.concat(getNotesFrom(next, nextFlag));
-  }
+
+  let currentNote = note;
+  do {
+    let nextId = currentNote.getFlag("scope", nextFlag);
+    next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
+    if (next) {
+      notes.push(next);
+      currentNote = next;
+    }
+  } while (next)
+
   return notes;
 }
 
@@ -160,10 +167,8 @@ export async function deleteNote(note) {
 
   game.scope.locked = true;
   await scene.updateEmbeddedDocuments("Note", [attachedData]);
-
-  // TODO - Update connector on attachedTo
-  // TODO - Does attachedTo variable update when updateEmb is called?
-
+  await removeConnectors([note]);
+  await updateConnectors([attachedTo.connector]);
   game.scope.locked = false;
 }
 
