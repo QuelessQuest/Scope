@@ -306,9 +306,12 @@ export class JournalDirectoryScope extends JournalDirectory {
       const fd = new FormDataExtended(form);
       let fo = fd.toObject();
       let id;
-      if (type === "legacy")
+      if (type === "legacy") {
         id = fo.changeLegacy;
-      else
+        game.scope.legacies.forEach(leg => {
+          if (leg.id === id) leg.text = fo.text;
+        });
+      } else
         id = fo.id;
 
       await scene.updateEmbeddedDocuments("Drawing", [{_id: id, text: fo.text}]);
