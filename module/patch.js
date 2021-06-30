@@ -48,8 +48,8 @@ export function patchCore() {
 
   Note.prototype._drawControlIcon = function () {
     let tint = this.data.iconTint ? foundry.utils.colorStringToHex(this.data.iconTint) : null;
-    let iconWidth = this.data.iconWidth || 360;
-    let iconHeight = this.data.iconHeight || 160;
+    let iconWidth = this.document.getFlag("scope", "iconWidth") || 360;
+    let iconHeight = this.document.getFlag("scope", "iconHeight") || 160;
     let nbc = this.document.getFlag("scope", "noteBorderColor");
     let borderColor = foundry.utils.colorStringToHex(nbc);
     let borderColorHalf = foundry.utils.colorStringToHex(`${nbc}80`);

@@ -13,12 +13,12 @@ export function isEmpty(thing) {
  *
  * @param {NoteDocument} note
  * @param {string} type
+ * @param {string} direction
  * @returns {{x: *, y: *}}
  */
-export function getSpacedPoint(note, type) {
-  let direction = note.getFlag("scope", "direction");
+export function getSpacedPoint(note, type, direction) {
   let shiftX = direction === "x" ? SCOPE.noteSettings[type].iconWidth + SCOPE.noteSettings[type].spacing : 0;
-  let shiftY = direction === "y" ? SCOPE.noteSettings[type].iconWidth + SCOPE.noteSettings[type].spacing : 0;
+  let shiftY = direction === "y" ? SCOPE.noteSettings[type].iconHeight + SCOPE.noteSettings[type].spacing : 0;
   return {x: note.data.x + shiftX, y: note.data.y + shiftY};
 }
 
@@ -207,18 +207,20 @@ export function registerSettings() {
 }
 
 /**
+ * Get the ID/Text pair from a list of NoteDocuments
  *
- * @param {NoteDocument} note
- * @returns {string}
+ * @param {NoteDocument[]}  notes
+ * @param {boolean}         none
+ * @returns {{}}
  */
-export function getDirection(note) {
-  switch (note.getFlag("scope", "type")) {
-    case "period":
-    case "scene":
-      return "x";
-    case "event":
-      return "y";
+export function getIDTextPairs(notes, none = true) {
+  let pairs = none ? {none: "--"} : {};
+  for (const note of notes) {
+    let thisNote = {};
+    thisNote[note.data._id] = note.data.text;
+    foundry.utils.mergeObject(pairs, thisNote);
   }
+  return pairs;
 }
 
 /**

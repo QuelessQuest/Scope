@@ -1,7 +1,7 @@
 import {SCOPE} from "./module/config.js";
 import {JournalDirectoryScope} from './module/sidebar/journal.js';
 import {JournalSheetScope} from "./module/journal/journal-sheet.js";
-import {getDirection, registerSettings, sortNotes} from "./module/helper.js";
+import {registerSettings, sortNotes} from "./module/helper.js";
 import {getFromTheme} from "./module/helper.js";
 import {insertNote} from "./module/helper.js";
 import {patchCore} from "./module/patch.js";
@@ -370,7 +370,7 @@ Hooks.on("createNote", async (noteDocument, options) => {
   const attachToEvent = journalEntry.getFlag("scope", "attachToEvent");
   const attachToScene = journalEntry.getFlag("scope", "attachToScene");
   let periodNote = null;
-  let eventNote;
+  let eventNote = null;
   let sceneNote;
   if (attachToPeriod && attachToPeriod !== "none") {
     periodNote = scene.getEmbeddedDocument("Note", attachToPeriod);
@@ -395,22 +395,35 @@ Hooks.on("createNote", async (noteDocument, options) => {
     order: -1,
     type: type,
     tone: tone,
+    iconWidth: SCOPE.noteSettings[type].iconWidth,
+    iconHeight: SCOPE.noteSettings[type].iconHeight,
     labelBorderColor: getFromTheme(`${type}-label-stroke-color`),
     noteBorderColor: getFromTheme("border-color"),
   }
 
   switch (type) {
     case "period":
-      if (periodNote) await addNoteTo(noteDocument, periodNote, getDirection(noteDocument), typeData, flagData);
+      if (periodNote) await addNoteTo(noteDocument, periodNote, "x", typeData, flagData);
       else {
         let periodNotes = scene.getEmbeddedCollection("Note").filter(note => note.getFlag("scope", "type") === "period");
         await addNote(noteDocument, sortNotes(periodNotes), typeData, flagData);
       }
       break;
     case "event":
-      //card = await game.scope.period.attach(type, noteDocument, attachToPeriod);
-      //periodNoteId = card.group;
-      //console.log(card);
+      if (periodNote) {
+        if (eventNote) {
+          await addNoteTo(noteDocument, eventNote, "y", typeData, flagData);
+        } else {
+          // Add it to the end of the period event list
+          let eventHeadId = periodNote.getFlag("scope", "nextY");
+          if (eventHeadId) {
+            let eventNotes = scene.getEmbeddedCollection("Note").filter(note => note.getFlag("scope", "type") === "event");
+            await addNote(noteDocument, sortNotes(eventNotes), typeData, flagData);
+          } else {
+            await addNoteTo(noteDocument, periodNote, "y", typeData, flagData);
+          }
+        }
+      }
       break;
     case "scene":
       //card = await periodCard.children.attach(type, noteDocument, attachToEvent);

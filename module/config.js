@@ -50,7 +50,7 @@ SCOPE.noteSettings = {
         type: "event",
         iconWidth: 250,
         iconHeight: 200,
-        spacing: 300
+        spacing: 100
     },
     scene: {
         type: "scene",

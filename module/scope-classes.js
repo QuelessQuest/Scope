@@ -45,7 +45,7 @@ export class ScopeControlIcon extends PIXI.Container {
     this.toneTexture = this.toneTexture ?? await loadTexture(SCOPE.icons[this.tone]);
 
     // Draw border
-    this.border.clear();
+    if (this.border) this.border.clear();
     this.border.lineStyle(2, this.borderColor, 1.0).drawRoundedRect(...this.rect, 20).endFill();
     //this.border.clear().lineStyle(2, this.borderColor, 1.0).drawRoundedRect(...this.rect, 20).endFill();
     this.border.filters = [new PIXI.filters.GlowFilter({color: this.borderColor, innerStrength: 2})];

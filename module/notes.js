@@ -12,7 +12,8 @@ import {sortNotes} from "./helper.js";
  * @param {NoteDocument} note
  * @param {NoteDocument} attachTo
  * @param {string}        direction
- * @param {{text: string, type: string, tone: string, icon: string, iconSize: number, iconTint: string, fontSize: number, textColor: string, labelBorderColor: string, noteBorderColor: string}}  typeData
+ * @param {{text: string, icon: string, iconSize: number, iconTint: string, fontSize: number, textColor: string}}  typeData
+ * @param {{order: number, type: string, tone: string, labelBorderColor: string, noteBorderColor: string}} flagData
  * @returns {Promise<void>}
  */
 export async function addNoteTo(note, attachTo, direction, typeData, flagData) {
@@ -90,7 +91,8 @@ export async function addNoteTo(note, attachTo, direction, typeData, flagData) {
  *
  * @param {NoteDocument}   note
  * @param {NoteDocument[]} sortedNotes
- * @param {{text: string, type: string, tone: string, icon: string, iconSize: number, iconTint: string, fontSize: number, textColor: string, labelBorderColor: string, noteBorderColor: string}}  typeData
+ * @param {{text: string, icon: string, iconSize: number, iconTint: string, fontSize: number, textColor: string}}  typeData
+ * @param {{order: number, type: string, tone: string, labelBorderColor: string, noteBorderColor: string}} flagData
  */
 export async function addNote(note, sortedNotes, typeData, flagData) {
   game.scope.locked = true;
