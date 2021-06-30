@@ -1,8 +1,10 @@
-import {SCOPE} from "../config.js";
 import {DialogScope} from "../journal/dialog.js";
-import {insertNote} from "../helper.js";
+import {getIDTextPairs, insertNote, sortNotes} from "../helper.js";
 import {getBookendPositions} from "../helper.js";
 import {arrange} from "../helper.js";
+import {getSpacedPoint} from "../helper.js";
+import {findNoteToAttachTo} from "../notes.js";
+import {getNotesFrom} from "../notes.js";
 
 export class JournalDirectoryScope extends JournalDirectory {
 
@@ -31,7 +33,7 @@ export class JournalDirectoryScope extends JournalDirectory {
    * Get the options for the display of the dialog
    * @param {string}  type
    * @param button
-   * @returns {{name: String, options: {top: number, left: number, width: number}, folderId: string}}
+   * @returns {{name: string, options: {top: number, left: number, width: number}, folderId: string}}
    * @private
    */
   _getData(type, button) {
@@ -78,9 +80,12 @@ export class JournalDirectoryScope extends JournalDirectory {
    * @private
    */
   _getDialogData(type, data) {
-    let periodCards = game.scope.period.getCardsIdNamePair();
-    periodCards = foundry.utils.mergeObject({"none": "--"}, periodCards);
 
+    let scene = game.scenes.getName("scope");
+    let periods = scene.getEmbeddedCollection("Note")
+      .filter(note => note.getFlag("scope", "type") === "period");
+
+    let periodPairs = getIDTextPairs(periods);
     let typeName = "";
     let attachCard = "";
     let eventCards = null;
@@ -90,25 +95,29 @@ export class JournalDirectoryScope extends JournalDirectory {
     let text = "";
     let id = "";
     let legacyData = {};
+    let direction = "";
 
     switch (type) {
       case "period":
         typeName = game.i18n.localize('SCOPE.JournalPeriod');
         attachCard = typeName;
+        direction = "x";
         break;
       case "event":
-        eventCards = {"none": "--"};
+        eventCards = {none: "--"};
         typeName = game.i18n.localize('SCOPE.JournalEvent');
         attachCard = game.i18n.localize('SCOPE.JournalPeriod');
         attachSubCard = typeName;
+        direction = "y";
         break;
       case "scene":
-        eventCards = {"none": "--"};
-        sceneCards = {"none": "--"};
+        eventCards = {none: "--"};
+        sceneCards = {none: "--"};
         typeName = game.i18n.localize('SCOPE.JournalScene');
         attachCard = game.i18n.localize('SCOPE.JournalPeriod');
         attachSubCard = game.i18n.localize('SCOPE.JournalEvent');
         attachSubSubCard = typeName;
+        direction = "x";
         break;
       case "picture":
         typeName = game.i18n.localize("SCOPE.UpdatePicture");
@@ -131,7 +140,7 @@ export class JournalDirectoryScope extends JournalDirectory {
 
     return {
       name: typeName,
-      periodCards: periodCards,
+      periodCards: periodPairs,
       cardSelected: "none",
       attachCard: attachCard,
       eventCards: eventCards,
@@ -146,7 +155,8 @@ export class JournalDirectoryScope extends JournalDirectory {
       text: text,
       id: id,
       folderId: data.folderId,
-      legacyData: legacyData
+      legacyData: legacyData,
+      direction: direction
     };
   }
 
@@ -296,9 +306,12 @@ export class JournalDirectoryScope extends JournalDirectory {
       const fd = new FormDataExtended(form);
       let fo = fd.toObject();
       let id;
-      if (type === "legacy")
+      if (type === "legacy") {
         id = fo.changeLegacy;
-      else
+        game.scope.legacies.forEach(leg => {
+          if (leg.id === id) leg.text = fo.text;
+        });
+      } else
         id = fo.id;
 
       await scene.updateEmbeddedDocuments("Drawing", [{_id: id, text: fo.text}]);
@@ -323,9 +336,10 @@ export class JournalDirectoryScope extends JournalDirectory {
       let fo = fd.toObject();
       this._createJournalEntry(fo.name, fo.tone, fo.folderId, fo, type).then(e => {
         this._maybeCreateNote(
-          e.getFlag("scope", "periodAttach"),
-          e.getFlag("scope", "eventAttach"),
-          e.getFlag("scope", "sceneAttach"),
+          e.getFlag("scope", "attachToPeriod"),
+          e.getFlag("scope", "attachToEvent"),
+          e.getFlag("scope", "attachToScene"),
+          e.getFlag("scope", "direction"),
           type,
           e.id);
       });
@@ -344,10 +358,8 @@ export class JournalDirectoryScope extends JournalDirectory {
    */
   async _createJournalEntry(name, tone, folderId, fo, type) {
     const content = await renderTemplate(`systems/scope/templates/journal/journal-${type}.html`, fo);
-    let eventAttach = "none";
-    let sceneAttach = "none";
-    if (fo.eventAttach) eventAttach = fo.eventAttach;
-    if (fo.sceneAttach) sceneAttach = fo.sceneAttach;
+    let attachToEvent = fo.attachToEvent ? fo.attachToEvent : "none";
+    let attachToScene = fo.attachToScene ? fo.attachToScene : "none";
     const createData = {
       content: content,
       name: name,
@@ -359,9 +371,10 @@ export class JournalDirectoryScope extends JournalDirectory {
         scope: {
           type: type,
           tone: tone,
-          periodAttach: fo.periodAttach,
-          eventAttach: eventAttach,
-          sceneAttach: sceneAttach
+          direction: fo.direction,
+          attachToPeriod: fo.attachToPeriod,
+          attachToEvent: attachToEvent,
+          attachToScene: attachToScene
         }
       }
     };
@@ -412,66 +425,113 @@ export class JournalDirectoryScope extends JournalDirectory {
    * @param {string}  periodId
    * @param {string}  eventId
    * @param {string}  sceneId
+   * @param {string}  direction
    * @param {string}  type
    * @param {string}  entityId
    * @private
    */
-  _maybeCreateNote(periodId, eventId, sceneId, type, entityId) {
+  _maybeCreateNote(periodId, eventId, sceneId, direction, type, entityId) {
 
-    if (periodId && periodId !== "none") {
-      switch (type) {
-        case "period":
-          insertNote(entityId, game.scope.period.getInsertPosition(periodId)).then(() => {
-          });
-          break;
-        case "event":
-          // Get the event x position
-          const periodCard = game.scope.period.findCard("id", periodId);
-          if (!periodCard) {
-            ui.notifications.warn("Something Bad Happened: Could not find the required period card", {permanent: true});
-            return;
-          }
+    if (!periodId || periodId === "none") return;
+    let scene = game.scenes.getName("scope");
+    let periodNote = scene.getEmbeddedDocument("Note", periodId);
+    switch (type) {
+      case "period":
+        insertNote(entityId, getSpacedPoint(periodNote, "period", "x"), direction).then(() => {
+        });
+        break;
+      case "event":
+        this._insertEvent(scene, entityId, periodNote, eventId);
+        break;
+      case "scene":
+        this._insertScene(scene, entityId, periodNote, eventId, sceneId);
+        break;
+    }
+  }
 
-          if (eventId !== "none") {
-            const eventCards = game.scope.period.findCard("id", periodId).children;
-            insertNote(entityId, eventCards.getInsertPosition(eventId)).then(() => {
-            });
-          } else {
-            // No event insertion point specified, attach to end of list
-            const eventX = periodCard.x;
-            let eventY = 0;
-            let insertAt = periodCard.children.getLast();
-            if (insertAt) {
-              ui.notifications.info("Period Attachment Requested without Event Entry Point set. Attaching to the End of the List")
-              eventY = insertAt.y + SCOPE.noteSettings.event.iconHeight + SCOPE.noteSettings.event.spacing.y;
-            } else {
-              eventY = periodCard.y + (SCOPE.noteSettings.period.iconHeight / 2) + (SCOPE.noteSettings.event.iconHeight / 2) + SCOPE.noteSettings.event.spacing.y;
-            }
-            insertNote(entityId, {x: eventX, y: eventY}).then(() => {
-            });
-          }
-          break;
-        case "scene":
-          const pCard = game.scope.period.findCard("id", periodId);
-          if (eventId && eventId !== "none") {
-            if (sceneId !== "none") {
-            } else {
-              // No scene insertion point specified, attach to end of list
-              const eventCard = pCard.children.findCard("id", eventId);
-              const sceneY = eventCard.y;
-              let sceneX = 0;
-              let insertPoint = eventCard.children.getLast();
-              if (insertPoint) {
-                ui.notifications.info("Event Attachment Requested without Scene Entry Point set. Attaching to the End of the List")
-                sceneX = insertPoint.x + SCOPE.noteSettings.scene.iconWidth + SCOPE.noteSettings.scene.spacing.x;
-              } else {
-                sceneX = eventCard.x + (SCOPE.noteSettings.event.iconWidth / 2) + (SCOPE.noteSettings.scene.iconWidth / 2) + SCOPE.noteSettings.scene.spacing.x;
-              }
-              insertNote(entityId, {x: sceneX, y: sceneY}).then(() => {
-              });
-            }
-          }
-          break;
+  /**
+   *
+   * @param {Scene}         scene
+   * @param {string}        entityId
+   * @param {NoteDocument}  periodNote
+   * @param {string}        eventId
+   * @private
+   */
+  _insertEvent(scene, entityId, periodNote, eventId) {
+    if (!periodNote) {
+      ui.notifications.warn("Something Bad Happened: Could not find the period", {permanent: true});
+      return;
+    }
+
+    let headEventId = periodNote.getFlag("scope", "nextY");
+    if (eventId !== "none") {
+      if (!headEventId) {
+        ui.notifications.warn("Something Bad Happened: Could not find the event", {permanent: true});
+        return;
+      }
+      let eventNotes = getNotesFrom(scene.getEmbeddedDocument("Note", headEventId), "nextY");
+      let eventNote = scene.getEmbeddedDocument("Note", eventId);
+      let attachTo = findNoteToAttachTo(eventNote.data.y, "y", sortNotes(eventNotes, "y"));
+      insertNote(entityId, getSpacedPoint(attachTo, "event", "y"), "y").then(() => {
+      });
+    } else {
+      // No event specified, so attach to the end of the periods event list
+      if (!headEventId) {
+        // First child
+        insertNote(entityId, getSpacedPoint(periodNote, "event", "y"), "y").then(() => {
+        });
+      } else {
+        let lastNote = scene.getEmbeddedDocument("Note", headEventId);
+        let currentNote = lastNote;
+        do {
+          let nextNoteId = currentNote.getFlag("scope", "nextY");
+          currentNote = nextNoteId ? scene.getEmbeddedDocument("Note", nextNoteId) : null;
+          if (currentNote) lastNote = currentNote;
+        } while (currentNote);
+        insertNote(entityId, getSpacedPoint(lastNote, "event", "y"), "y").then(() => {
+        });
+      }
+    }
+  }
+
+  _insertScene(scene, entityId, periodNote, eventId, sceneId) {
+    if (!periodNote) {
+      ui.notifications.warn("Something Bad Happened: Could not find the period", {permanent: true});
+      return;
+    }
+    if (!eventId) {
+      ui.notifications.warn("Something Bad Happened: Could not find the event", {permanent: true});
+      return;
+    }
+
+    let eventNote = scene.getEmbeddedDocument("Note", eventId);
+    let headSceneId = eventNote.getFlag("scope", "nextX");
+    if (sceneId !== "none") {
+      if (!headSceneId) {
+        ui.notifications.warn("Something Bad Happened: Could not find the scene", {permanent: true});
+        return;
+      }
+      let sceneNotes = getNotesFrom(scene.getEmbeddedDocument("Note", headSceneId), "nextX");
+      let sceneNote = scene.getEmbeddedDocument("Note", sceneId);
+      let attachTo = findNoteToAttachTo(sceneNote.data.x, "x", sortNotes(sceneNotes, "x"));
+      insertNote(entityId, getSpacedPoint(attachTo, "scene", "x"), "x").then(() => {
+      });
+    } else {
+      // No scene specified, so attach to the end of the events scene list
+      if (!headSceneId) {
+        // First child
+        insertNote(entityId, getSpacedPoint(eventNote, "scene", "x"), "x").then(() => {
+        });
+      } else {
+        let lastNote = scene.getEmbeddedDocument("Note", headSceneId);
+        let currentNote = lastNote;
+        do {
+          let nextNoteId = currentNote.getFlag("scope", "nextX");
+          currentNote = nextNoteId ? scene.getEmbeddedDocument("Note", nextNoteId) : null;
+          if (currentNote) lastNote = currentNote;
+        } while (currentNote);
+        insertNote(entityId, getSpacedPoint(lastNote, "scene", "x"), "x").then(() => {
+        });
       }
     }
   }

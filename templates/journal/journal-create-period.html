@@ -20,10 +20,11 @@
             <label>{{localize "SCOPE.InsertAfter"}} {{localize "SCOPE.JournalPeriod"}}</label>
             <p class="notes">{{localize "SCOPE.Optional"}}</p>
         </div>
-        <select class="scope select event" name="periodAttach">
+        <select class="scope select event" name="attachToPeriod">
             {{selectOptions periodCards selected=cardSelected localize=false}}
         </select>
     </div>
     <input type="text" name="folderId" value="{{folderId}}" hidden/>
+    <input type="text" name="direction" value="{{direction}}" hidden/>
     <div class="last"></div>
 </form>

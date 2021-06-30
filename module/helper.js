@@ -11,21 +11,40 @@ export function isEmpty(thing) {
 
 /**
  *
+ * @param {NoteDocument} note
+ * @param {string} type
+ * @param {string} direction
+ * @returns {{x: *, y: *}}
+ */
+export function getSpacedPoint(note, type, direction) {
+  let shiftX = direction === "x" ? SCOPE.noteSettings[type].iconWidth + SCOPE.noteSettings[type].spacing : 0;
+  let shiftY = direction === "y" ? SCOPE.noteSettings[type].iconHeight + SCOPE.noteSettings[type].spacing : 0;
+  return {x: note.data.x + shiftX, y: note.data.y + shiftY};
+}
+
+/**
+ *
  * @param {string}  id
  * @param {number}  x
  * @param {number}  y
- * @returns {Promise<abstract.Document[]|boolean>}
+ * @param {string}  direction
+ * @returns {Document[]}
  */
-export async function insertNote(id, {x, y}) {
+export async function insertNote(id, {x, y}, direction = "x") {
   const noteData = new foundry.data.NoteData({
     entryId: id,
     x: x,
     y: y,
     icon: CONST.DEFAULT_NOTE_ICON,
-    textAnchor: CONST.TEXT_ANCHOR_POINTS.CENTER
+    textAnchor: CONST.TEXT_ANCHOR_POINTS.CENTER,
+    flags: {
+      scope: {
+        direction: direction
+      }
+    }
   });
 
-  if ( !canvas.grid.hitArea.contains(x, y) ) return false;
+  if (!canvas.grid.hitArea.contains(x, y)) return false;
 
   canvas.notes.activate();
   let scene = game.scenes.getName("scope");
@@ -49,12 +68,12 @@ export function getListPosition(size) {
   let mid = game.scenes.active.data.width / 2;
   let length;
   const spacing = SCOPE.noteSettings.period.iconWidth + game.settings.get("scope", "spacing");
-  if ( size > 1 ) {
+  if (size > 1) {
     length = spacing * size;
   } else {
     length = SCOPE.noteSettings.period.iconWidth;
   }
-  return {x: mid - (length / 2) + (spacing/2), y: game.settings.get("scope", "fromTop")}
+  return {x: mid - (length / 2) + (spacing / 2), y: game.settings.get("scope", "fromTop")}
 }
 
 /**
@@ -187,30 +206,64 @@ export function registerSettings() {
   });
 }
 
-export function droppedOn(scene, note, targetCard) {
-  let shiftIt = {};
-  // Is it on top of target
-  let targetNote = scene.getEmbeddedDocument("Note", targetCard.noteId);
-  if ( SCOPE.bump.hitTestRectangle(note, targetNote) ) {
-    const amount = (SCOPE.noteSettings[this.type].spacing[this.sortDirection]
-        - (card[this.sortDirection]
-            - targetCard[this.sortDirection]))
-        + (SCOPE.noteSettings[this.type].spacing[this.sortDirection]
-            + SCOPE.noteSettings.spacing);
-    shiftIt = {card: card, amount: amount};
+/**
+ * Get the ID/Text pair from a list of NoteDocuments
+ *
+ * @param {NoteDocument[]}  notes
+ * @param {boolean}         none
+ * @returns {{}}
+ */
+export function getIDTextPairs(notes, none = true) {
+  let pairs = none ? {none: "--"} : {};
+  for (const note of notes) {
+    let thisNote = {};
+    thisNote[note.data._id] = note.data.text;
+    foundry.utils.mergeObject(pairs, thisNote);
   }
-  // Is it on top of targets next
-  if ( targetCard.next ) {
-    let targetNextNote = scene.getEmbeddedDocument("Note", targetCard.next.noteId);
-    if ( SCOPE.bump.hitTestRectangle(note, targetNextNote) ) {
-      const amount = (SCOPE.noteSettings[this.type].spacing[this.sortDirection]
-          - (card[this.sortDirection]
-              - targetCard.next[this.sortDirection]))
-          + (SCOPE.noteSettings[this.type].spacing[this.sortDirection]
-              + SCOPE.noteSettings.spacing);
-      shiftIt = {card: targetCard.next, amount: amount};
+  return pairs;
+}
+
+/**
+ *
+ * @param {string}        type
+ * @param {string}        direction
+ * @param {NoteDocument} note
+ * @param {NoteDocument} noteToCheck
+ * @returns {{}|{noteToShift: NoteDocument, amount: number}}
+ */
+export function droppedOn(type, direction, note, noteToCheck) {
+
+  let scene = game.scenes.getName("scope");
+
+  // Was the new note dropped on top of the note
+  if (SCOPE.bump.hitTestRectangle(note, noteToCheck)) {
+    return {
+      noteToShift: note,
+      amount: (SCOPE.noteSettings[type].spacing - (note.data[direction] - noteToCheck.data[direction]))
+        + (SCOPE.noteSettings[type].spacing + SCOPE.noteSettings.spacing)
+    };
+  }
+
+  let nextFlag = "next" + direction.toUpperCase();
+  // Was the new note dropped on top of the next note
+  let nextId = noteToCheck.getFlag("scope", nextFlag);
+  let next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
+  if (next) {
+    if (SCOPE.bump.hitTestRectangle(note, next)) {
+      let nextCheck = noteToCheck.getFlag("scope", nextFlag);
+      let nextNote = nextCheck ? scene.getEmbeddedDocument("Note", nextCheck) : null;
+      let nextDirection = nextNote ? nextNote.data[direction] : 0;
+      return {
+        noteToShift: next,
+        amount: (SCOPE.noteSettings[type].spacing - (note.data[direction] - nextDirection))
+          + (SCOPE.noteSettings[this.type].spacing[this.sortDirection] + SCOPE.noteSettings.spacing)
+      };
     }
   }
 
-  return shiftIt;
+  return {};
+}
+
+export function sortNotes(notesToSort, direction) {
+  return notesToSort.sort((a, b) => a.data[direction] - b.data[direction]);
 }

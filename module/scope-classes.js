@@ -1,69 +1,6 @@
 import {SCOPE} from "./config.js";
 
 /**
- * Class that hold all card information at a game level.
- */
-
-/**
- * The data contained within the Card List (Double linked list)
- * Also contains the drawing references between cards.
- */
-export class CardScope {
-  /**
-   *
-   * @param noteDocument {NoteDocument}
-   */
-  constructor(noteDocument) {
-    this.entry = noteDocument.data.entryId;
-    this.noteId = noteDocument.data._id;
-    this.prev = null;
-    this.next = null;
-    let je = game.journal.get(this.entry);
-    this.name = je.data.name;
-    this.connectors = {
-      prev: {},
-      next: {}
-    }
-    this.x = noteDocument.data.x;
-    this.y = noteDocument.data.y;
-    this._id = foundry.utils.randomID();
-    this._children = null;  // This note may have an additional list attached
-    this.connectors.prev = {x: "", y: ""};
-    this.connectors.next = {x: "", y: ""};
-    this._order = 0;
-    this._group = null; // hold the object id under which this card a child
-  }
-
-  get id() {
-    return this._id;
-  }
-
-  get children() {
-    return this._children;
-  }
-
-  set children(childList) {
-    this._children = childList;
-  }
-
-  get order() {
-    return this._order;
-  }
-
-  set order(newOrder) {
-    this._order = newOrder;
-  }
-
-  get group() {
-    return this._group;
-  }
-
-  set group(newGroup) {
-    this._group = newGroup;
-  }
-}
-
-/**
  * Class to draw the card icons. Replaces the ControlIcon class of Core.
  * Allows for non-square icons, removes the background and reshapes the border.
  */
@@ -108,7 +45,7 @@ export class ScopeControlIcon extends PIXI.Container {
     this.toneTexture = this.toneTexture ?? await loadTexture(SCOPE.icons[this.tone]);
 
     // Draw border
-    this.border.clear();
+    if (this.border) this.border.clear();
     this.border.lineStyle(2, this.borderColor, 1.0).drawRoundedRect(...this.rect, 20).endFill();
     //this.border.clear().lineStyle(2, this.borderColor, 1.0).drawRoundedRect(...this.rect, 20).endFill();
     this.border.filters = [new PIXI.filters.GlowFilter({color: this.borderColor, innerStrength: 2})];

@@ -19,7 +19,7 @@
             <label>{{localize "SCOPE.Attach"}} {{attachCard}}</label>
             <p class="notes">{{localize "SCOPE.Optional"}}</p>
         </div>
-        <select class="scope select period" name="periodAttach">
+        <select class="scope select period" name="attachToPeriod">
             {{selectOptions periodCards selected=cardSelected localize=false}}
         </select>
     </div>
@@ -29,7 +29,7 @@
             <label>{{localize "SCOPE.Attach"}} {{attachSubCard}}</label>
             <p class="notes">{{localize "SCOPE.Optional"}}</p>
         </div>
-        <select class="scope select event" name="eventAttach">
+        <select class="scope select event" name="attachToEvent">
             {{selectOptions eventCards selected=subCardSelected localize=false}}
         </select>
     </div>
@@ -40,11 +40,12 @@
             <label>{{localize "SCOPE.InsertAfter"}} {{attachSubSubCard}}</label>
             <p class="notes">{{localize "SCOPE.Optional"}}</p>
         </div>
-        <select class="scope select scope-scene" name="sceneAttach">
+        <select class="scope select scope-scene" name="attachToScene">
             {{selectOptions sceneCards selected=subSubCardSelected localize=false}}
         </select>
     </div>
     {{/if}}
     <input type="text" name="folderId" value="{{folderId}}" hidden/>
+    <input type="text" name="direction" value="{{direction}}" hidden/>
     <div class="last"></div>
 </form>

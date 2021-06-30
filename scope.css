@@ -135,12 +135,12 @@
   border: 1px solid var(--scope-border-color);
   box-shadow: 0 0 10px var(--scope-accent-color);
 }
-.system-Scope .window-content {
+.system-scope .window-content {
   background: var(--scope-bg-color);
   background-color: var(--scope-bg-color);
 }
-.system-Scope #navigation #scene-list .scene.view,
-.system-Scope #navigation #scene-list .scene.context {
+.system-scope #navigation #scene-list .scene.view,
+.system-scope #navigation #scene-list .scene.context {
   cursor: default;
   color: #FFF;
   border: 1px solid var(--scope-border-color);
@@ -148,234 +148,234 @@
   border-bottom: 1px solid var(--scope-border-color-lighter);
   box-shadow: 0 0 10px var(--scope-border-color-lighter);
 }
-.system-Scope #navigation #nav-toggle {
+.system-scope #navigation #nav-toggle {
   background: var(--scope-bg-color-half);
 }
-.system-Scope #navigation #nav-toggle:hover {
+.system-scope #navigation #nav-toggle:hover {
   text-shadow: 0 0 10px var(--scope-accent-color);
 }
-.system-Scope #controls .scene-control.active,
-.system-Scope #controls .control-tool.active {
+.system-scope #controls .scene-control.active,
+.system-scope #controls .control-tool.active {
   color: var(--scope-text-light-color);
   background: var(--scope-bg-color);
   border: 1px solid var(--scope-border-color);
   border-bottom: 1px solid var(--scope-border-color-lighter);
   box-shadow: 0 0 10px var(--scope-border-color-lighter);
 }
-.system-Scope #controls .scene-control {
+.system-scope #controls .scene-control {
   background: var(--scope-bg-color-half);
   color: var(--scope-text-light-color-half);
 }
-.system-Scope #controls .scene-control:hover {
+.system-scope #controls .scene-control:hover {
   color: var(--scope-text-light-color);
   border: 1px solid var(--scope-border-color);
   border-bottom: 1px solid var(--scope-border-color-lighter);
   box-shadow: 0 0 10px var(--scope-border-color-lighter);
 }
-.system-Scope #controls .control-tool {
+.system-scope #controls .control-tool {
   background: var(--scope-bg-color-half);
   color: var(--scope-text-light-color-half);
 }
-.system-Scope #controls .control-tool:hover {
+.system-scope #controls .control-tool:hover {
   color: #FFF;
   border: 1px solid var(--scope-border-color);
   border-bottom: 1px solid var(--scope-border-color-lighter);
   box-shadow: 0 0 10px var(--scope-border-color-lighter);
 }
-.system-Scope h1 {
+.system-scope h1 {
   font-size: 2em;
   border-bottom: 2px solid var(--scope-accent-color);
 }
-.system-Scope h2 {
+.system-scope h2 {
   font-size: 1.5em;
   border-bottom: 1px solid var(--scope-accent-color);
 }
-.system-Scope .scopeLine {
+.system-scope .scopeLine {
   border-bottom: 1px solid var(--scope-border-color);
   box-shadow: 0 0 10px var(--scope-border-color-lighter);
   margin-top: 5px;
   margin-bottom: 5px;
 }
-.system-Scope #sidebar-tabs {
+.system-scope #sidebar-tabs {
   border-bottom: 1px solid var(--scope-border-color);
   box-shadow: 0 0 10px var(--scope-border-color-lighter);
 }
-.system-Scope #sidebar-tabs > .item.active {
+.system-scope #sidebar-tabs > .item.active {
   color: var(--scope-light-color-half);
   border: 1px solid var(--scope-border-color);
   border-bottom: none;
   box-shadow: 0 0 6px inset var(--scope-border-color-lighter);
 }
-.system-Scope .sidebar-tab .directory-header .header-search input {
+.system-scope .sidebar-tab .directory-header .header-search input {
   background: var(--scope-fg-color);
 }
-.system-Scope .sidebar-tab .directory-list .directory-item h4 {
+.system-scope .sidebar-tab .directory-list .directory-item h4 {
   color: var(--scope-text-light-color);
 }
-.system-Scope .sidebar-tab .directory-list .directory-item.scene h3 {
+.system-scope .sidebar-tab .directory-list .directory-item.scene h3 {
   color: var(--scope-text-dark-color);
 }
-.system-Scope li.folder.collapsed > .folder-header h3 {
+.system-scope li.folder.collapsed > .folder-header h3 {
   color: var(--scope-text-light-color);
 }
-.system-Scope #scenes .scene h3 {
+.system-scope #scenes .scene h3 {
   color: var(--scope-text-light-color);
   text-shadow: 1px 1px 5px var(--scope-text-dark-color);
 }
-.system-Scope a[href] {
+.system-scope a[href] {
   color: var(--scope-accent-color);
 }
-.system-Scope a:hover {
+.system-scope a:hover {
   color: var(--scope-text-light-color);
   text-shadow: 0 0 8px var(--scope-accent-color);
 }
-.system-Scope a .entity-link,
-.system-Scope a .inline-roll {
+.system-scope a .entity-link,
+.system-scope a .inline-roll {
   background: var(--scope-fg-color);
   border: 1px solid var(--scope-border-color);
 }
-.system-Scope .filepicker .directory > li:hover {
+.system-scope .filepicker .directory > li:hover {
   color: var(--scope-text-highlight-color);
   text-shadow: 0 0 8px var(--scope-accent-color);
 }
-.system-Scope .tabs .item.active {
+.system-scope .tabs .item.active {
   color: var(--scope-text-light-color);
   text-shadow: 0 0 8px var(--scope-accent-color);
 }
-.system-Scope hr {
+.system-scope hr {
   border-top: 1px solid var(--scope-border-color);
   border-bottom: 1px solid var(--scope-border-color);
 }
-.system-Scope blockquote {
+.system-scope blockquote {
   border-left: 3px solid var(--scope-border-color);
 }
-.system-Scope section.secret {
+.system-scope section.secret {
   border-top: 1px solid var(--scope-border-color);
   border-bottom: 1px solid var(--scope-border-color);
 }
-.system-Scope table {
+.system-scope table {
   border: 1px solid var(--scope-border-color);
 }
-.system-Scope .last {
+.system-scope .last {
   border-bottom: 2px groove;
   border-bottom-color: var(--scope-border-color);
   margin-bottom: 10px;
   margin-top: 10px;
 }
-.system-Scope .emulated-flex-gap {
+.system-scope .emulated-flex-gap {
   --gap: 12px;
   display: inline-flex;
   flex-wrap: wrap;
   margin: calc(-1 * var(--gap)) 0 0 calc(-1 * var(--gap));
   width: calc(100% + var(--gap));
 }
-.system-Scope .emulated-flex-gap > * {
+.system-scope .emulated-flex-gap > * {
   margin: var(--gap) 0 0 var(--gap);
 }
-.system-Scope form button {
+.system-scope form button {
   background: var(--scope-fg-color);
   border: 1px groove var(--scope-border-color);
 }
-.system-Scope form .hint {
+.system-scope form .hint {
   color: var(--scope-text-dark-color);
 }
-.system-Scope form .notes {
+.system-scope form .notes {
   color: var(--scope-text-selection-color);
   margin: 0;
 }
-.system-Scope form #bigendtext {
+.system-scope form #bigendtext {
   align-items: normal;
 }
-.system-Scope form #bigtext {
+.system-scope form #bigtext {
   align-items: normal;
 }
-.system-Scope button {
+.system-scope button {
   color: var(--scope-text-dark-color);
   background: var(--scope-fg-color);
   border: 1px solid var(--scope-border-color);
 }
-.system-Scope button:hover {
+.system-scope button:hover {
   background: var(--scope-accent-color);
   color: var(--scope-text-light-color);
   border: 1px groove var(--scope-border-color);
   box-shadow: 0 0 5px var(--scope-accent-color);
 }
-.system-Scope .dialog .dialog-buttons button {
+.system-scope .dialog .dialog-buttons button {
   color: var(--scope-text-dark-color);
   background: var(--scope-fg-color);
   border: 1px solid var(--scope-border-color);
 }
-.system-Scope .dialog .dialog-buttons button .default {
+.system-scope .dialog .dialog-buttons button .default {
   color: var(--scope-text-dark-color);
   background: var(--scope-fg-color);
   border: 1px solid var(--scope-border-color);
 }
-.system-Scope .dialog .dialog-buttons button .default:hover {
+.system-scope .dialog .dialog-buttons button .default:hover {
   background: var(--scope-accent-color);
   color: var(--scope-text-light-color);
   border: 1px groove var(--scope-border-color);
   box-shadow: 0 0 5px var(--scope-accent-color);
 }
-.system-Scope .dialog .dialog-buttons button:hover {
+.system-scope .dialog .dialog-buttons button:hover {
   background: var(--scope-accent-color);
   color: var(--scope-text-light-color);
   border: 1px groove var(--scope-border-color);
   box-shadow: 0 0 5px var(--scope-accent-color);
 }
-.system-Scope select {
+.system-scope select {
   color: var(--scope-text-dark-color);
   background: var(--scope-fg-color);
   border: 1px solid var(--scope-border-color);
 }
-.system-Scope select:hover,
-.system-Scope select:focus {
+.system-scope select:hover,
+.system-scope select:focus {
   box-shadow: 0px 0px 5px var(--scope-accent-color), 0px 0px 5px var(--scope-accent-color);
 }
-.system-Scope textarea {
+.system-scope textarea {
   color: var(--scope-text-dark-color);
   background: var(--scope-fg-color);
   border: 1px solid var(--scope-border-color);
   font-family: inherit;
   font-size: inherit;
 }
-.system-Scope textarea:focus {
+.system-scope textarea:focus {
   outline: 2px solid var(--scope-border-color);
   box-shadow: 0 0 10px var(--scope-border-color-lighter);
 }
-.system-Scope .range-value {
+.system-scope .range-value {
   color: var(--scope-text-dark-color);
   background: var(--scope-fg-color);
   border: 1px solid var(--scope-border-color);
 }
-.system-Scope input[type="text"] {
+.system-scope input[type="text"] {
   background: var(--scope-fg-color);
   border: 1px solid var(--scope-border-color);
 }
-.system-Scope input[type="text"]:hover,
-.system-Scope input[type="text"]:focus {
+.system-scope input[type="text"]:hover,
+.system-scope input[type="text"]:focus {
   box-shadow: 0px 0px 5px var(--scope-accent-color), 0px 0px 5px var(--scope-accent-color);
 }
-.system-Scope input[type="color"][data-edit] {
+.system-scope input[type="color"][data-edit] {
   color: var(--scope-text-dark-color-half);
   background: var(--scope-fg-color);
   border: 1px solid var(--scope-border-color);
 }
-.system-Scope input[type="color"][data-edit]:hover,
-.system-Scope input[type="color"][data-edit]:focus {
+.system-scope input[type="color"][data-edit]:hover,
+.system-scope input[type="color"][data-edit]:focus {
   box-shadow: 0px 0px 5px var(--scope-accent-color), 0px 0px 5px var(--scope-accent-color);
 }
-.system-Scope input[type="range"] {
+.system-scope input[type="range"] {
   color: var(--scope-text-dark-color-half);
   background: var(--scope-fg-color);
   border: 1px solid var(--scope-border-color);
 }
-.system-Scope input[type="range"]:hover,
-.system-Scope input[type="range"]:focus {
+.system-scope input[type="range"]:hover,
+.system-scope input[type="range"]:focus {
   box-shadow: 0px 0px 5px var(--scope-accent-color), 0px 0px 5px var(--scope-accent-color);
 }
-.system-Scope input[type="password"],
-.system-Scope input[type="range"] + .range-value,
-.system-Scope input[type="datetime-local"] {
+.system-scope input[type="password"],
+.system-scope input[type="range"] + .range-value,
+.system-scope input[type="datetime-local"] {
   color: var(--scope-text-dark-color-half);
   background: var(--scope-fg-color);
   border: 1px solid var(--scope-border-color);
