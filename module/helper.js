@@ -10,6 +10,7 @@ export function isEmpty(thing) {
 }
 
 /**
+ * Calculates the insertion point of a note from the note it is attached to
  *
  * @param {NoteDocument} note
  * @param {string} type
@@ -62,18 +63,6 @@ export function getBookendPositions() {
     start: {x: margin + halfIcon, y: 450},
     end: {x: game.scenes.active.data.width - margin - halfIcon, y: 450}
   };
-}
-
-export function getListPosition(size) {
-  let mid = game.scenes.active.data.width / 2;
-  let length;
-  const spacing = SCOPE.noteSettings.period.iconWidth + game.settings.get("scope", "spacing");
-  if (size > 1) {
-    length = spacing * size;
-  } else {
-    length = SCOPE.noteSettings.period.iconWidth;
-  }
-  return {x: mid - (length / 2) + (spacing / 2), y: game.settings.get("scope", "fromTop")}
 }
 
 /**
@@ -133,6 +122,12 @@ export async function arrange() {
    */
 }
 
+/**
+ * Temporary (hopefully) placeholder until Whetstone gets updated for 0.8+
+ *
+ * @param {string} item
+ * @returns {string}
+ */
 export function getFromTheme(item) {
   return CONFIG.scope.themeDefaults[`--scope-${item}`];
 }
@@ -264,6 +259,28 @@ export function droppedOn(type, direction, note, noteToCheck) {
   return {};
 }
 
+/**
+ * Find the note nearest to this note in the provided list
+ *
+ * @param {NoteDocument}    note
+ * @param {NoteDocument[]}  notesToSort
+ * @returns {NoteDocument[]}
+ */
+export function sortByDistanceFrom(note, notesToSort) {
+  return notesToSort.sort((a,b) => {
+    let d1 = Math.hypot(a.data.x - note.data.x, a.data.y - note.data.y);
+    let d2 = Math.hypot(b.data.x - note.data.x, b.data.y - note.data.y);
+    return d1 - d2;
+  });
+}
+
+/**
+ * Sort the notes based on their x or y values.
+ *
+ * @param {NoteDocument[]}  notesToSort
+ * @param {string}          direction
+ * @returns {NoteDocument[]}
+ */
 export function sortNotes(notesToSort, direction) {
   return notesToSort.sort((a, b) => a.data[direction] - b.data[direction]);
 }
