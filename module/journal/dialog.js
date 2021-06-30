@@ -69,7 +69,7 @@ export class DialogScope extends Dialog {
     let scenePairs = getIDTextPairs(scenes, false);
     const sceneNotes = form.find('select[name="attachToScene"]');
     for (const id in scenePairs) {
-      sceneNotes.append(`<option value="${id}">${cMap[id]}</option>`);
+      sceneNotes.append(`<option value="${id}">${scenePairs[id]}</option>`);
     }
   }
 }

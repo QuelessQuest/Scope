@@ -438,44 +438,98 @@ export class JournalDirectoryScope extends JournalDirectory {
         });
         break;
       case "event":
-        // Get the event x position
-        if (!periodNote) {
-          ui.notifications.warn("Something Bad Happened: Could not find the period", {permanent: true});
-          return;
-        }
+        this._insertEvent(scene, entityId, periodNote, eventId);
+        break;
+      case "scene":
+        this._insertScene(scene, entityId, periodNote, eventId, sceneId);
+        break;
+    }
+  }
 
-        let headEventId = periodNote.getFlag("scope", "nextY");
-        if (eventId !== "none") {
-          if (!headEventId) {
-            ui.notifications.warn("Something Bad Happened: Could not find the event", {permanent: true});
-            return;
-          }
-          let eventNotes = getNotesFrom(scene.getEmbeddedDocument("Note", headEventId), "nextY");
-          let eventNote = scene.getEmbeddedDocument("Note", eventId);
-          let attachTo = findNoteToAttachTo(eventNote.data.y, "y", sortNotes(eventNotes, "y"));
-          insertNote(entityId, getSpacedPoint(attachTo, "event", "y"), "y").then(() => {
-          });
-        } else {
-          // No event specified, so attach to the end of the periods event list
-          if (!headEventId) {
-            // First child
-            insertNote(entityId, getSpacedPoint(periodNote, "event", "y"), "y").then(() => {
-            });
-          } else {
-            let lastNote = scene.getEmbeddedDocument("Note", headEventId);
-            let currentNote = lastNote;
-            do {
-              let nextNoteId = currentNote.getFlag("scope", "nextY");
-              currentNote = nextNoteId ? scene.getEmbeddedDocument("Note", nextNoteId) : null;
-              if (currentNote) lastNote = currentNote;
-            } while (currentNote);
-            insertNote(entityId, getSpacedPoint(lastNote, "event", "y"), "y").then(() => {
-            });
-          }
-        }
+  /**
+   *
+   * @param {Scene}         scene
+   * @param {string}        entityId
+   * @param {NoteDocument}  periodNote
+   * @param {string}        eventId
+   * @private
+   */
+  _insertEvent(scene, entityId, periodNote, eventId) {
+    if (!periodNote) {
+      ui.notifications.warn("Something Bad Happened: Could not find the period", {permanent: true});
+      return;
+    }
 
+    let headEventId = periodNote.getFlag("scope", "nextY");
+    if (eventId !== "none") {
+      if (!headEventId) {
+        ui.notifications.warn("Something Bad Happened: Could not find the event", {permanent: true});
+        return;
+      }
+      let eventNotes = getNotesFrom(scene.getEmbeddedDocument("Note", headEventId), "nextY");
+      let eventNote = scene.getEmbeddedDocument("Note", eventId);
+      let attachTo = findNoteToAttachTo(eventNote.data.y, "y", sortNotes(eventNotes, "y"));
+      insertNote(entityId, getSpacedPoint(attachTo, "event", "y"), "y").then(() => {
+      });
+    } else {
+      // No event specified, so attach to the end of the periods event list
+      if (!headEventId) {
+        // First child
+        insertNote(entityId, getSpacedPoint(periodNote, "event", "y"), "y").then(() => {
+        });
+      } else {
+        let lastNote = scene.getEmbeddedDocument("Note", headEventId);
+        let currentNote = lastNote;
+        do {
+          let nextNoteId = currentNote.getFlag("scope", "nextY");
+          currentNote = nextNoteId ? scene.getEmbeddedDocument("Note", nextNoteId) : null;
+          if (currentNote) lastNote = currentNote;
+        } while (currentNote);
+        insertNote(entityId, getSpacedPoint(lastNote, "event", "y"), "y").then(() => {
+        });
+      }
+    }
+  }
 
-      // TODO - Scenes
+  _insertScene(scene, entityId, periodNote, eventId, sceneId) {
+    if (!periodNote) {
+      ui.notifications.warn("Something Bad Happened: Could not find the period", {permanent: true});
+      return;
+    }
+    if (!eventId) {
+      ui.notifications.warn("Something Bad Happened: Could not find the event", {permanent: true});
+      return;
+    }
+
+    let eventNote = scene.getEmbeddedDocument("Note", eventId);
+    let headSceneId = eventNote.getFlag("scope", "nextX");
+    if (sceneId !== "none") {
+      if (!headSceneId) {
+        ui.notifications.warn("Something Bad Happened: Could not find the scene", {permanent: true});
+        return;
+      }
+      let sceneNotes = getNotesFrom(scene.getEmbeddedDocument("Note", headSceneId), "nextX");
+      let sceneNote = scene.getEmbeddedDocument("Note", sceneId);
+      let attachTo = findNoteToAttachTo(sceneNote.data.x, "x", sortNotes(sceneNotes, "x"));
+      insertNote(entityId, getSpacedPoint(attachTo, "scene", "x"), "x").then(() => {
+      });
+    } else {
+      // No scene specified, so attach to the end of the events scene list
+      if (!headSceneId) {
+        // First child
+        insertNote(entityId, getSpacedPoint(eventNote, "scene", "x"), "x").then(() => {
+        });
+      } else {
+        let lastNote = scene.getEmbeddedDocument("Note", headSceneId);
+        let currentNote = lastNote;
+        do {
+          let nextNoteId = currentNote.getFlag("scope", "nextX");
+          currentNote = nextNoteId ? scene.getEmbeddedDocument("Note", nextNoteId) : null;
+          if (currentNote) lastNote = currentNote;
+        } while (currentNote);
+        insertNote(entityId, getSpacedPoint(lastNote, "scene", "x"), "x").then(() => {
+        });
+      }
     }
   }
 }

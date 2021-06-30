@@ -24,7 +24,6 @@ Hooks.once("init", function () {
   CONFIG.scope = SCOPE;
   CONFIG.ui.journal = JournalDirectoryScope;
   CONFIG["JournalEntry"]["sheetClass"] = JournalSheetScope;
-  //CONFIG["Note"]["documentClass"] = ScopeDocument;
   game.scope = SCOPE.namespace;
 
   registerSettings();
@@ -252,6 +251,7 @@ Hooks.on("dropCanvasData", (canvas, data) => {
       insertNote(data.id, {x: data.x, y: data.y}, "y");
       break;
     case "scene":
+      insertNote(data.id, {x: data.x, y: data.y}, "x");
       break;
   }
 });
@@ -354,11 +354,22 @@ Hooks.on("createNote", async (noteDocument, options) => {
       }
       break;
     case "scene":
-      //card = await periodCard.children.attach(type, noteDocument, attachToEvent);
-      //eventNoteId = card.group;
-      //periodNoteId = eventCard.group;
-      break;
-    case "legacy":
+      if (periodNote) {
+        if (eventNote) {
+          if (sceneNote) {
+            await addNoteTo(noteDocument, sceneNote, "x", typeData, flagData);
+          } else {
+            // Add it to the end of the event scene list
+            let sceneHeadId = eventNote.getFlag("scope", "nextX");
+            if (sceneHeadId) {
+              let sceneNotes = scene.getEmbeddedCollection("Note").filter(note => note.getFlag("scope", "type") === "scene");
+              await addNote(noteDocument, sortNotes(sceneNotes, "x"), typeData, flagData);
+            } else {
+              await addNoteTo(noteDocument, eventNote, "x", typeData, flagData);
+            }
+          }
+        }
+      }
       break;
   }
 });

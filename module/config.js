@@ -92,7 +92,6 @@ SCOPE.namespace = {
         text: ""
     },
     legacies: [],
-    period: {},
     bookend: 0,
     attached: false
 }
