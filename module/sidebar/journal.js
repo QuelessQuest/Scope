@@ -1,4 +1,3 @@
-import {SCOPE} from "../config.js";
 import {DialogScope} from "../journal/dialog.js";
 import {getIDTextPairs, insertNote, sortNotes} from "../helper.js";
 import {getBookendPositions} from "../helper.js";
@@ -453,7 +452,7 @@ export class JournalDirectoryScope extends JournalDirectory {
           }
           let eventNotes = getNotesFrom(scene.getEmbeddedDocument("Note", headEventId), "nextY");
           let eventNote = scene.getEmbeddedDocument("Note", eventId);
-          let attachTo = findNoteToAttachTo(eventNote.data.y, "y", sortNotes(eventNotes));
+          let attachTo = findNoteToAttachTo(eventNote.data.y, "y", sortNotes(eventNotes, "y"));
           insertNote(entityId, getSpacedPoint(attachTo, "event", "y"), "y").then(() => {
           });
         } else {

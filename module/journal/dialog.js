@@ -1,4 +1,3 @@
-import {isEmpty} from "../helper.js";
 import {getIDTextPairs} from "../helper.js";
 import {getNotesFrom} from "../notes.js";
 
@@ -61,9 +60,7 @@ export class DialogScope extends Dialog {
     event.preventDefault();
     let scene = game.scenes.getName("scope");
     const form = $(event.target.form);
-    const periodId = form.find('select[name="attachToPeriod"]').find(':selected').val();
     const eventId = form.find('select[name="attachToEvent"]').find(':selected').val();
-    let periodNote = scene.getEmbeddedDocument("Note", periodId);
     let eventNote = scene.getEmbeddedDocument("Note", eventId);
     let sceneHeadId = eventNote.getFlag("scope", "nextX");
     let scenes = sceneHeadId ?

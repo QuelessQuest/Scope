@@ -229,7 +229,7 @@ export function getIDTextPairs(notes, none = true) {
  * @param {string}        direction
  * @param {NoteDocument} note
  * @param {NoteDocument} noteToCheck
- * @returns {{}|{noteToShift: NoteDocument, order: number, amount: number}}
+ * @returns {{}|{noteToShift: NoteDocument, amount: number}}
  */
 export function droppedOn(type, direction, note, noteToCheck) {
 
@@ -239,7 +239,6 @@ export function droppedOn(type, direction, note, noteToCheck) {
   if (SCOPE.bump.hitTestRectangle(note, noteToCheck)) {
     return {
       noteToShift: note,
-      order: 0,
       amount: (SCOPE.noteSettings[type].spacing - (note.data[direction] - noteToCheck.data[direction]))
         + (SCOPE.noteSettings[type].spacing + SCOPE.noteSettings.spacing)
     };
@@ -256,7 +255,6 @@ export function droppedOn(type, direction, note, noteToCheck) {
       let nextDirection = nextNote ? nextNote.data[direction] : 0;
       return {
         noteToShift: next,
-        order: 1,
         amount: (SCOPE.noteSettings[type].spacing - (note.data[direction] - nextDirection))
           + (SCOPE.noteSettings[this.type].spacing[this.sortDirection] + SCOPE.noteSettings.spacing)
       };
@@ -266,6 +264,6 @@ export function droppedOn(type, direction, note, noteToCheck) {
   return {};
 }
 
-export function sortNotes(notesToSort) {
-  return notesToSort.sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
+export function sortNotes(notesToSort, direction) {
+  return notesToSort.sort((a, b) => a.data[direction] - b.data[direction]);
 }

@@ -1,7 +1,7 @@
 import {SCOPE} from "./module/config.js";
 import {JournalDirectoryScope} from './module/sidebar/journal.js';
 import {JournalSheetScope} from "./module/journal/journal-sheet.js";
-import {registerSettings, sortNotes} from "./module/helper.js";
+import {isEmpty, registerSettings, sortNotes} from "./module/helper.js";
 import {getFromTheme} from "./module/helper.js";
 import {insertNote} from "./module/helper.js";
 import {patchCore} from "./module/patch.js";
@@ -9,6 +9,7 @@ import {addNote} from "./module/notes.js";
 import {addNoteTo} from "./module/notes.js";
 import {deleteNote} from "./module/notes.js";
 import {updateConnectors} from "./module/notes.js";
+import {findAttachedTo} from "./module/notes.js";
 
 /**
  * Sets up the environment and manages the hooks.
@@ -229,66 +230,8 @@ async function _createFolder(folders, folder, type) {
  * happens on the notes layer.
  */
 Hooks.on("canvasReady", async () => {
-
   // Initialize the collision detection. Used to determine if cards overlap
   SCOPE.bump = new Bump(PIXI);
-
- // let scene = game.scenes.getName("scope");
-
-  // Remove any existing connectors from the scene
-//  let drawings = scene.getEmbeddedCollection("Drawing");
- // let drawingsToClear = [...drawings].filter(d => d.getFlag("scope", "type") === "connector").map(d => d.data._id);
- // if (drawingsToClear.length)
- //   await scene.deleteEmbeddedDocuments("Drawing", drawingsToClear);
-
- // let notes = scene.getEmbeddedCollection("Note");
-
-  // Rebuild the period list, adding back connectors
-  //let periodNotes = notes.filter(n => n.data.type === "period");
-
-  // Order of notes is not saved in the data naturally, we must recreate the periods in order so what is displayed
-  // on screen matches what is stored in game.scope.period
-  //const sortedPeriods = sortNotes(periodNotes)
-  //for (const period of sortedPeriods) {
-   // await addNote(scene, period, sortedPeriods);
-  //}
-
-  // Rebuild the events, adding back connectors
-  /*
-  let eventNotes = notes.filter(n => n.getFlag("scope", "type") === "event");
-  let eventGroups = eventNotes.reduce((r, a) => {
-    const periodNote = a.getFlag("scope", "periodNote");
-    r[periodNote] = [...r[periodNote] || [], a];
-    return r;
-  }, {});
-
-  for (const group in eventGroups) {
-    let period = game.scope.period.findCard("noteId", group);
-    const sortedEvents = eventGroups[group].sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
-    for (const event of sortedEvents) {
-      await game.scope.period.attach("event", event, period.id);
-    }
-  }
-
-  // Rebuild the scenes, adding back connectors
-  let sceneNotes = notes.filter(n => n.getFlag("scope", "type") === "scene");
-  let sceneGroups = sceneNotes.reduce((r, a) => {
-    const eventNote = a.getFlag("scope", "eventNote");
-    r[eventNote] = [...r[eventNote] || [], a];
-    return r;
-  }, {});
-
-  for (const group in sceneGroups) {
-    let period = game.scope.period.findCard("noteId", sceneGroups[group][0].getFlag("scope", "periodNote"));
-    let eventList = period.children;
-    let event = eventList.findCard("noteId", group);
-    const sortedScenes = sceneGroups[group].sort((a, b) => a.getFlag("scope", "order") - b.getFlag("scope", "order"));
-    for (const scene of sortedScenes) {
-      await eventList.attach("scene", scene, event.id);
-    }
-  }
-
-   */
 });
 
 /**
@@ -308,8 +251,6 @@ Hooks.on("dropCanvasData", (canvas, data) => {
       break;
     case "scene":
       break;
-    case "legacy":
-      break;
   }
 });
 
@@ -318,26 +259,12 @@ Hooks.on("dropCanvasData", (canvas, data) => {
  */
 Hooks.on("updateNote", async (note, data, options, userid) => {
   if (!game.scope.locked) {
-
     game.scope.locked = true;
-    let direction = note.getFlag("scope", "direction");
-    let nextFlag = "next" + direction.toUpperCase();
-    let previousFlag = "previous" + direction.toUpperCase();
-    let scene = game.scenes.getName("scope");
-    let toUpdate = [];
-
-    toUpdate.push(note);
-
-    let nextId = note.getFlag("scope", nextFlag);
-    let next = nextId ? scene.getEmbeddedDocument("Note", nextId) : null;
-    let previousId = note.getFlag("scope", previousFlag);
-    let previous = previousId ? scene.getEmbeddedDocument("Note", previousId) : null;
-
-    if (next) toUpdate.push(next);
-    if (previous) toUpdate.push(previous);
-    await updateConnectors(sortNotes(toUpdate), direction);
+    let updates = [note];
+    let attachedTo = findAttachedTo(note);
+    if (!isEmpty(attachedTo)) updates.push(attachedTo.connector);
+    await updateConnectors(updates);
     game.scope.locked = false;
-
   }
 });
 
@@ -392,7 +319,6 @@ Hooks.on("createNote", async (noteDocument, options) => {
   }
 
   let flagData = {
-    order: -1,
     type: type,
     tone: tone,
     iconWidth: SCOPE.noteSettings[type].iconWidth,
