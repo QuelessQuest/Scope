@@ -1,7 +1,39 @@
 import {SCOPE} from "./config.js";
-import {getFromTheme} from "./helper.js";
+import {getFromTheme, sortByDistanceFrom, sortNotes} from "./helper.js";
 import {droppedOn} from "./helper.js";
 import {isEmpty} from "./helper.js";
+
+export async function addTheNote(noteDocument, parentToList, attachTo, typeData, flagData) {
+
+  let scene = game.scenes.getName("scope");
+  let direction = noteDocument.getFlag("scope", "direction");
+  let next = "next" + direction.toUpperCase();
+
+  if (parentToList) {
+    if (attachTo) {
+      await addNoteTo(noteDocument, attachTo, direction, typeData, flagData);
+    } else {
+      // Add it to the end of the period event list
+      let noteListHeadId = parentToList.getFlag("scope", next);
+      if (noteListHeadId) {
+        let notes = getNotesFrom(scene.getEmbeddedDocument("Note", noteListHeadId), next);
+        await addNote(noteDocument, sortNotes(notes, direction), typeData, flagData);
+      } else {
+        await addNoteTo(noteDocument, parentToList, direction, typeData, flagData);
+      }
+    }
+  } else {
+    let noteType = noteDocument.getFlag("scope", "type");
+    let notes = scene.getEmbeddedCollection("Note").filter(note => note.getFlag("scope", "type") === noteType);
+    if (!notes) {
+      ui.notifications.warn("Nothing exists to which this can be attached", {permanent: true});
+      // TODO - delete the note
+      return;
+    }
+    let sortedNotes = sortByDistanceFrom(noteDocument, notes);
+    await addNoteTo(noteDocument, sortedNotes[0], direction, typeData, flagData);
+  }
+}
 
 /**
  * Add a note to another note. Update as necessary if added between two existing notes.

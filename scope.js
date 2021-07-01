@@ -3,7 +3,7 @@ import {JournalDirectoryScope} from './module/sidebar/journal.js';
 import {JournalSheetScope} from "./module/journal/journal-sheet.js";
 import {getFromTheme, insertNote, isEmpty, registerSettings, sortByDistanceFrom, sortNotes} from "./module/helper.js";
 import {patchCore} from "./module/patch.js";
-import {addNote, addNoteTo, deleteNote, findAttachedTo, findNoteToAttachTo, getNotesFrom, updateConnectors} from "./module/notes.js";
+import {addNote, addNoteTo, addTheNote, deleteNote, findAttachedTo, findNoteToAttachTo, getNotesFrom, updateConnectors} from "./module/notes.js";
 
 /**
  * Sets up the environment and manages the hooks.
@@ -311,7 +311,7 @@ Hooks.on("createNote", async (noteDocument, options) => {
     iconSize: SCOPE.noteSettings[type].iconWidth,
     iconTint: getFromTheme(`${type}-icon-color`),
     fontSize: getFromTheme(`${type}-label-size`),
-    textColor: getFromTheme(`${type}-label-color`),
+    textColor: getFromTheme(`${type}-label-color`)
   }
 
   let flagData = {
@@ -332,47 +332,11 @@ Hooks.on("createNote", async (noteDocument, options) => {
       }
       break;
     case "event":
-      if (periodNote) {
-        if (eventNote) {
-          await addNoteTo(noteDocument, eventNote, "y", typeData, flagData);
-        } else {
-          // Add it to the end of the period event list
-          let eventHeadId = periodNote.getFlag("scope", "nextY");
-          if (eventHeadId) {
-            let eventNotes = getNotesFrom(scene.getEmbeddedDocument("Note", eventHeadId), "nextY");
-            await addNote(noteDocument, sortNotes(eventNotes, "y"), typeData, flagData);
-          } else {
-            await addNoteTo(noteDocument, periodNote, "y", typeData, flagData);
-          }
-        }
-      } else {
-        let eventNotes = scene.getEmbeddedCollection("Note").filter(note => note.getFlag("scope", "type") === "event");
-        if (!eventNotes) {
-          ui.notifications.warn("Nothing exists to which this can be attached", {permanent: true});
-          // TODO - delete the note
-          return;
-        }
-        let sortedEvents = sortByDistanceFrom(noteDocument, eventNotes);
-        await addNoteTo(noteDocument, sortedEvents[0], "y", typeData, flagData);
-      }
+      await addTheNote(noteDocument, periodNote, eventNote, typeData, flagData);
       break;
     case "scene":
-      if (periodNote) {
-        if (eventNote) {
-          if (sceneNote) {
-            await addNoteTo(noteDocument, sceneNote, "x", typeData, flagData);
-          } else {
-            // Add it to the end of the event scene list
-            let sceneHeadId = eventNote.getFlag("scope", "nextX");
-            if (sceneHeadId) {
-              let sceneNotes = scene.getEmbeddedCollection("Note").filter(note => note.getFlag("scope", "type") === "scene");
-              await addNote(noteDocument, sortNotes(sceneNotes, "x"), typeData, flagData);
-            } else {
-              await addNoteTo(noteDocument, eventNote, "x", typeData, flagData);
-            }
-          }
-        }
-      }
+      if (periodNote)
+        await addTheNote(noteDocument, eventNote, sceneNote, typeData, flagData);
       break;
   }
 });
