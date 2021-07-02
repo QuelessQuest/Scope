@@ -361,3 +361,17 @@ Hooks.on("deleteJournalEntry", async (entity, options, userId) => {
   if (!note) return;
   await deleteNote(note);
 });
+
+/**
+ * If a JournalEntry is renamed, update the corresponding note text
+ */
+Hooks.on("updateJournalEntry", async (journalEntry, data, options, userid) => {
+  let scene = game.scenes.getName("scope");
+  let notes = scene.getEmbeddedCollection("Note");
+  let noteToUpdate = notes.find(note => note.data.entryId === data._id);
+  await scene.updateEmbeddedDocuments("Note", [{
+    _id: noteToUpdate.data._id,
+    text: data.name
+  }]);
+  console.log("updating journal");
+});
