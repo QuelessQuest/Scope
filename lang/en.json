@@ -54,6 +54,8 @@
   "SCOPE.FocusColor": "Focus Color",
   "SCOPE.FocusColorH": "Color of the text for the focus",
   "SCOPE.FocusLabelColor": "Focus Label Color",
+  "SCOPE.ManagePlayers": "Manage Players",
+  "SCOPE.CreateFromUsers": "Create Players from Users",
   "SCOPE.FocusLabelColorH": "Color of the Current Focus label",
   "SCOPE.PeriodIconColor": "Period Card Color",
   "SCOPE.PeriodIconColorH": "The background color for the period cards",

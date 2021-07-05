@@ -55,7 +55,6 @@
 }
 
 @import "flex.less";
-@import "journal.less";
 @import "hotbar.less";
 
 ::selection {
@@ -172,6 +171,20 @@
 
     border-bottom: 1px solid var(--scope-border-color);
     box-shadow: 0 0 10px var(--scope-border-color-lighter);
+  }
+
+  .journal-sheet {
+    .scope {
+      img {
+        box-sizing: border-box;
+        border: 0;
+        max-width: 100%;
+        float: left;
+        margin-right: 10px;
+        background: #FFFFFF;
+        border-radius: 50px;
+      }
+    }
   }
 
   .sidebar-tab {

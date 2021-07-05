@@ -1,6 +1,2 @@
-- When a JournalEntry is renamed, also update the corresponding note, if any
+
 - When a JournalEntry is deleted, also delete  the corresponding note, if any
-- When period is moved, connector to event goes away. If event is moved, it comes back. Moving period more does nothing.
-- Note deletion
-    - remove/rebuild connectors
-    - update all next/prev

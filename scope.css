@@ -89,9 +89,6 @@
 .strikethrough-text {
   text-decoration: line-through;
 }
-.scope .period img {
-  border: 0;
-}
 #hotbar .bar-controls,
 #hotbar #macro-list {
   color: var(--scope-text-light-color);
@@ -205,6 +202,15 @@
   border: 1px solid var(--scope-border-color);
   border-bottom: none;
   box-shadow: 0 0 6px inset var(--scope-border-color-lighter);
+}
+.system-scope .journal-sheet .scope img {
+  box-sizing: border-box;
+  border: 0;
+  max-width: 100%;
+  float: left;
+  margin-right: 10px;
+  background: #FFFFFF;
+  border-radius: 50px;
 }
 .system-scope .sidebar-tab .directory-header .header-search input {
   background: var(--scope-fg-color);

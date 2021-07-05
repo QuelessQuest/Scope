@@ -1,0 +1,26 @@
+<form id="journal-scope-manage-players" autocomplete="off">
+    <div class="form-group">
+        <div class="action-buttons flexrow">
+            <button type="button" class="btn-from-users"><i class="fas fa-users"></i>{{localize 'SCOPE.CreateFromUsers'}}</button>
+        </div>
+    </div>
+    <div class="last"></div>
+    <div>
+        <div>HEADER</div>
+        <div class="player-list">
+            {{~#each players as |player i|}}
+            <div>{{player}}</div>
+            {{/each}}
+        </div>
+    </div>
+    <div class="last"></div>
+    <div class="form-group">
+        <div class="flexrow">
+            <input type="text" name="add-name" placeholder=""/>
+            <div class="action-buttons">
+                <button type="button" class="add"><i class="fas fa-user"></i>Add Player</button>
+            </div>
+        </div>
+    </div>
+    <div class="last"></div>
+</form>

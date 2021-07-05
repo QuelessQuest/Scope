@@ -22,6 +22,7 @@ export class DialogScope extends Dialog {
     if ( this.options.onChange ) {
       html.find('select[name="attachToPeriod"]').change(this._onChangePeriod.bind(this));
       html.find('select[name="attachToEvent"]').change(this._onChangeEvent.bind(this));
+      html.find(".btn-from-users").click(this._onCreatePlayersFromUsers.bind(this));
     }
     html.find(".dialog-button").click(this._onClickButton.bind(this));
     if ( this.data.render instanceof Function ) this.data.render(this.options.jQuery ? html : html[0]);
@@ -70,6 +71,28 @@ export class DialogScope extends Dialog {
     const sceneNotes = form.find('select[name="attachToScene"]');
     for (const id in scenePairs) {
       sceneNotes.append(`<option value="${id}">${scenePairs[id]}</option>`);
+    }
+  }
+
+  async _onCreatePlayersFromUsers(event) {
+    event.preventDefault();
+
+    const form = $(event.target.form);
+    let users = game.users.map(e => e.data.name).filter(n => n !== "Gamemaster");
+    let existingPlayers = game.actors.map(a => a.data.name);
+    let players = form.find('.player-list');
+
+    // Create an actor to represent each user/player
+    for (let user of users) {
+      if (existingPlayers.includes(user)) {
+        ui.notifications.warn(`Player ${user} already exists. Will not recreate`);
+      } else {
+        await Actor.create({
+          name: user,
+          type: "character"
+        });
+        players.append(`<div>${user}</div>`);
+      }
     }
   }
 }

@@ -27,6 +27,7 @@ export class JournalDirectoryScope extends JournalDirectory {
     html.find(".header-actions .journal.arrange").click(e => arrange());
     html.find(".header-actions .journal.picture").click(e => this._onCreateText(e, "picture"));
     html.find(".header-actions .journal.focus").click(e => this._onCreateText(e, "focus"));
+    html.find(".header-actions .journal.characters").click(e => this._onManagePlayers(e));
   }
 
   /**
@@ -285,6 +286,35 @@ export class JournalDirectoryScope extends JournalDirectory {
       let fo = fd.toObject();
       this._createPalette("Palette", fo.tone, fo.folderId, fo, "palette")
     });
+  }
+
+  _getPlayerData() {
+    return {
+      players: game.actors.map(e => e.data.name)
+    }
+  }
+
+  async _onManagePlayers(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    renderTemplate(
+      `systems/scope/templates/journal/journal-manage-players.html`,
+      this._getPlayerData()).then(content => {
+        new DialogScope({
+          title: game.i18n.localize('SCOPE.ManagePlayers'),
+          content: content,
+          buttons: {
+            create: {
+              icon: '<i class="fas fa-check"></i>',
+              label: "Done",
+              callback: () => {}
+            }
+          },
+          default: "create"
+        }).render(true);
+      });
+
   }
 
   /**
